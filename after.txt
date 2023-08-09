@@ -1,0 +1,9 @@
+Gateway of last resort is 192.168.1.1 to network 0.0.0.0
+
+C    192.168.1.0/24 is directly connected, FastEthernet0/0
+S    10.0.0.0/8 [1/0] via 192.168.1.2
+C    172.16.0.0/16 is directly connected, GigabitEthernet0/0
+S    192.168.2.0/24 [1/0] via 192.168.1.2
+S    192.168.3.0/24 [1/0] via 192.168.1.4
+C    192.168.4.0/24 is directly connected, FastEthernet1/0
+S    0.0.0.0/0 [1/0] via 192.168.1.1
