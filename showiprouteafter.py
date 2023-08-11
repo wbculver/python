@@ -50,35 +50,30 @@ def save_ip_route_to_excel(data, output_file):
         # Write the DataFrame to a worksheet
         df.to_excel(writer, index=False)
 
-# Retrieve "show ip route" without timestamps for each device
-ip_route_data = {}
-for ip in device_ips:
-    route_output = get_ip_route_without_timestamps(ip)
-    ip_route_data[ip] = route_output
+# Function to compare two sets of route data
+def compare_routes(old_routes, new_routes):
+    changes = []
+    for line_num, (old_line, new_line) in enumerate(zip(old_routes, new_routes), start=1):
+        if old_line != new_line:
+            changes.append((line_num, old_line, new_line))
+    return changes
 
-# Save the initial IP route data to "EquinixRoutesBeforeChange.xlsx"
-output_file = "EquinixRoutesBeforeChange.xlsx"
-save_ip_route_to_excel(ip_route_data.values(), output_file)
-print(f"Initial Show IP Route data (without timestamps) saved to {output_file}")
-
-# Load the initial route data from the previously created Excel file
-df_initial = pd.read_excel(output_file, header=None)
-initial_routes = df_initial[0].tolist()
-
-# Retrieve updated "show ip route" data and compare it with the initial data
+# Retrieve updated "show ip route" data for each device
 ip_route_data_after = {}
 for ip in device_ips:
     route_output_after = get_ip_route_without_timestamps(ip)
     ip_route_data_after[ip] = route_output_after
 
+# Load the initial route data from the previously created "before" Excel file
+initial_file = "EquinixRoutesBeforeChange.xlsx"
+df_initial = pd.read_excel(initial_file, header=None)
+initial_routes = df_initial[0].tolist()
+
 # Compare the routes before and after
 changes = {}
-for ip, route_before in ip_route_data.items():
+for ip, route_before in zip(device_ips, initial_routes):
     route_after = ip_route_data_after[ip]
-    changes[ip] = []
-    for line_num, (old_line, new_line) in enumerate(zip(initial_routes, route_after.split("\n")), start=1):
-        if old_line != new_line:
-            changes[ip].append((line_num, old_line, new_line))
+    changes[ip] = compare_routes(route_before.split("\n"), route_after.split("\n"))
 
 # Save the changes to "EquinixRoutesAfterChange.xlsx"
 output_file_after = "EquinixRoutesAfterChange.xlsx"
