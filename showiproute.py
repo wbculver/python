@@ -8,9 +8,8 @@ password = "Eve1234!"
 
 # List of device IP addresses to download "show ip route" from
 device_ips = [
-    "192.168.1.1",
-    "192.168.1.2",
-    # Add more IP addresses as needed
+    "10.111.237.200",
+    "10.111.237.201",
 ]
 
 # Function to retrieve "show ip route" for a device and remove timestamps
