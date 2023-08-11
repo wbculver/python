@@ -19,14 +19,13 @@ net_connect.enable()
 # Send the "show ip route" command and retrieve the output
 output = net_connect.send_command("show ip route")
 
-# Remove lines with timestamps (format: 00:00:00)
-ip_route_lines = output.split("\n")
-filtered_lines = [line for line in ip_route_lines if not re.match(r'^\s*\d{2}:\d{2}:\d{2}\s*', line)]
+# Define a regex pattern to match the timestamp format (e.g., 00:00:00 or 12:34:56)
+pattern = re.compile(r'\d{2}:\d{2}:\d{2}')
 
-# Join the filtered lines to form the final output
-ip_route_output = "\n".join(filtered_lines)
+# Remove lines with the timestamp pattern
+ip_route_output = "\n".join([line for line in output.split("\n") if not pattern.search(line)])
 
-# Print the IP route without timestamps
+# Print the IP route without lines containing timestamps
 print(ip_route_output)
 
 # Disconnect from the device
