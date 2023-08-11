@@ -2,6 +2,7 @@ from netmiko import ConnectHandler
 import re
 import pandas as pd
 import xlsxwriter
+import socket
 
 # Variables
 username = "admin"
@@ -12,6 +13,14 @@ device_ips = [
     "10.111.237.200",
     "10.111.237.201",
 ]
+
+# Function to perform DNS lookup and retrieve hostname for an IP address
+def get_hostname(ip):
+    try:
+        hostname, _ = socket.getnameinfo((ip, 0), socket.NI_NOFQDN)
+        return hostname
+    except socket.herror:
+        return ip
 
 # Function to retrieve "show ip route" for a device and remove timestamps
 def get_ip_route_without_timestamps(device_ip):
@@ -45,21 +54,28 @@ ip_route_data = {}
 
 # Retrieve "show ip route" without timestamps for each device
 for ip in device_ips:
-    # Add the device IP address as a key in the dictionary
-    ip_route_data[ip] = get_ip_route_without_timestamps(ip)
+    # Perform DNS lookup to get the hostname
+    hostname = get_hostname(ip)
+    # Add the device IP address and hostname as a key in the dictionary
+    ip_route_data[ip] = {
+        "hostname": hostname,
+        "route_output": get_ip_route_without_timestamps(ip),
+    }
 
 # Save the IP route data to an Excel file
 output_file = "EquinixRoutesBeforeChange.xlsx"
 
 # Create a Pandas DataFrame for each device
 dfs = []
-for ip, route_output in ip_route_data.items():
+for ip, data in ip_route_data.items():
+    hostname = data["hostname"]
+    route_output = data["route_output"]
     # Create a list of route entries with a new line for each entry
     route_entries = route_output.split("\n")
     # Create a DataFrame with a single column and the "Routes for Device IP" header
-    df = pd.DataFrame({"Route Data": [f"Routes for Device IP: {ip}"] + route_entries})
+    df = pd.DataFrame({"Route Data": [f"Routes for Device IP: {hostname}"] + route_entries})
     # Remove invalid characters from sheet name
-    sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
+    sheet_name = re.sub(r'[\/:*?"<>|]', '_', hostname)
     dfs.append((df, sheet_name))
 
 # Create a Pandas Excel writer using XlsxWriter as the engine
