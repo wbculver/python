@@ -2,8 +2,20 @@ from netmiko import ConnectHandler
 import re
 import csv
 
+# Variables
+username = "YOUR_USERNAME"
+password = "YOUR_PASSWORD"
+enable_password = "YOUR_ENABLE_PASSWORD"
+
+# List of device IP addresses to download "show ip route" from
+device_ips = [
+    "192.168.1.1",
+    "192.168.1.2",
+    # Add more IP addresses as needed
+]
+
 # Function to retrieve "show ip route" for a device and remove timestamps
-def get_ip_route_without_timestamps(device_ip, username, password, enable_password):
+def get_ip_route_without_timestamps(device_ip):
     # Cisco device information
     device = {
         "device_type": "cisco_ios",  # Use the appropriate device type for your ASR
@@ -33,20 +45,12 @@ def get_ip_route_without_timestamps(device_ip, username, password, enable_passwo
 
     return ip_route_output
 
-# List of device IP addresses to download "show ip route" from
-device_ips = ["YOUR_DEVICE_IP"]  # Replace with the actual IP addresses
-
-# Define your credentials
-username = "YOUR_USERNAME"
-password = "YOUR_PASSWORD"
-enable_password = "YOUR_ENABLE_PASSWORD"
-
 # Create a list to store the "show ip route" output for each device
 ip_route_data = []
 
 # Retrieve "show ip route" without timestamps for each device
 for ip in device_ips:
-    ip_route_output = get_ip_route_without_timestamps(ip, username, password, enable_password)
+    ip_route_output = get_ip_route_without_timestamps(ip)
     ip_route_data.append(ip_route_output)
 
 # Save the IP route data to a CSV file
