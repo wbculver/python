@@ -50,6 +50,8 @@ ip_route_data = []
 
 # Retrieve "show ip route" without timestamps for each device
 for ip in device_ips:
+    # Add the device IP address as a header
+    ip_route_data.append(f"Routes for Device IP: {ip}\n")
     ip_route_output = get_ip_route_without_timestamps(ip)
     ip_route_data.append(ip_route_output)
 
