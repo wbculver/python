@@ -2,7 +2,7 @@ from netmiko import ConnectHandler
 import re
 import pandas as pd
 import xlsxwriter
-import socket
+import os
 
 # Variables
 username = "admin"
@@ -13,14 +13,6 @@ device_ips = [
     "10.111.237.200",
     "10.111.237.201",
 ]
-
-# Function to perform DNS lookup and retrieve hostname for an IP address
-def get_hostname(ip):
-    try:
-        hostname, _ = socket.getnameinfo((ip, 0), socket.NI_NOFQDN)
-        return hostname
-    except socket.herror:
-        return ip
 
 # Function to retrieve "show ip route" for a device and remove timestamps
 def get_ip_route_without_timestamps(device_ip):
@@ -49,42 +41,58 @@ def get_ip_route_without_timestamps(device_ip):
 
     return ip_route_output
 
-# Create a dictionary to store the "show ip route" output for each device
-ip_route_data = {}
+# Function to save IP route data to an Excel file
+def save_ip_route_to_excel(data, output_file):
+    # Create a Pandas DataFrame
+    df = pd.DataFrame({"Route Data": data})
+    # Create a Pandas Excel writer using XlsxWriter as the engine
+    with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
+        # Write the DataFrame to a worksheet
+        df.to_excel(writer, index=False)
+
+# Function to compare two sets of route data
+def compare_routes(old_routes, new_routes):
+    changes = []
+    for line_num, (old_line, new_line) in enumerate(zip(old_routes, new_routes)):
+        if old_line != new_line:
+            changes.append((line_num + 1, old_line, new_line))
+    return changes
 
 # Retrieve "show ip route" without timestamps for each device
+ip_route_data_before = {}
+ip_route_data_after = {}
 for ip in device_ips:
-    # Perform DNS lookup to get the hostname
-    hostname = get_hostname(ip)
-    # Add the device IP address and hostname as a key in the dictionary
-    ip_route_data[ip] = {
-        "hostname": hostname,
-        "route_output": get_ip_route_without_timestamps(ip),
-    }
+    route_output_before = get_ip_route_without_timestamps(ip)
+    ip_route_data_before[ip] = route_output_before
 
-# Save the IP route data to an Excel file
-output_file = "EquinixRoutesBeforeChange.xlsx"
+# Save the initial IP route data to "EquinixRoutesBeforeChange.xlsx"
+output_file_before = "EquinixRoutesBeforeChange.xlsx"
+save_ip_route_to_excel(ip_route_data_before.values(), output_file_before)
+print(f"Initial Show IP Route data (without timestamps) saved to {output_file_before}")
 
-# Create a Pandas DataFrame for each device
-dfs = []
-for ip, data in ip_route_data.items():
-    hostname = data["hostname"]
-    route_output = data["route_output"]
-    # Create a list of route entries with a new line for each entry
-    route_entries = route_output.split("\n")
-    # Create a DataFrame with a single column and the "Routes for Device IP" header
-    df = pd.DataFrame({"Route Data": [f"Routes for Device IP: {hostname}"] + route_entries})
-    # Remove invalid characters from sheet name
-    sheet_name = re.sub(r'[\/:*?"<>|]', '_', hostname)
-    dfs.append((df, sheet_name))
+# Retrieve updated "show ip route" data for each device
+for ip in device_ips:
+    route_output_after = get_ip_route_without_timestamps(ip)
+    ip_route_data_after[ip] = route_output_after
 
-# Create a Pandas Excel writer using XlsxWriter as the engine
-with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
-    for df, sheet_name in dfs:
-        # Write each DataFrame to a separate worksheet with the modified sheet name
-        df.to_excel(writer, sheet_name=sheet_name, index=False)
-        worksheet = writer.sheets[sheet_name]
-        # Adjust the column width to fit the content
-        worksheet.set_column('A:A', max(len(line) for line in df["Route Data"]))
+# Compare the routes before and after
+changes = {}
+for ip, route_before in ip_route_data_before.items():
+    route_after = ip_route_data_after[ip]
+    changes[ip] = compare_routes(route_before.split("\n"), route_after.split("\n"))
 
-print(f"Show IP Route data (without timestamps) saved to {output_file}")
+# Save the changes to "EquinixRoutesAfterChange.xlsx"
+output_file_after = "EquinixRoutesAfterChange.xlsx"
+with pd.ExcelWriter(output_file_after, engine='xlsxwriter') as writer:
+    for ip, change_data in changes.items():
+        # Create a DataFrame with the change information
+        df_changes = pd.DataFrame(change_data, columns=["Line Number", "Before", "After"])
+        # Write the DataFrame to a worksheet named after the IP address
+        df_changes.to_excel(writer, sheet_name=ip, index=False)
+        worksheet = writer.sheets[ip]
+        # Adjust the column widths
+        worksheet.set_column('A:A', 12)
+        worksheet.set_column('B:B', 60)
+        worksheet.set_column('C:C', 60)
+
+print(f"Show IP Route data changes saved to {output_file_after}")
