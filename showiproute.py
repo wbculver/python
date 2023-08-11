@@ -1,6 +1,6 @@
 from netmiko import ConnectHandler
 import re
-import csv
+import pandas as pd
 
 # Variables
 username = "admin"
@@ -44,18 +44,17 @@ ip_route_data = []
 
 # Retrieve "show ip route" without timestamps for each device
 for ip in device_ips:
-    # Add the device IP address as a header
-    ip_route_data.append(f"Routes for Device IP: {ip}\n")
+    # Add the device IP address as a header (styled with bold and blue)
+    header = f"\033[1m\033[34mRoutes for Device IP: {ip}\033[0m\n"  # Bold and blue
+    ip_route_data.append(header)
     ip_route_output = get_ip_route_without_timestamps(ip)
     ip_route_data.append(ip_route_output)
 
-# Save the IP route data to a CSV file
-output_file = "EquinixRoutesBeforeChange.csv"
-with open(output_file, 'w', newline='') as csv_file:
-    csv_writer = csv.writer(csv_file)
-    for route_output in ip_route_data:
-        # Split the route output into lines and write each line as a separate row
-        for line in route_output.split('\n'):
-            csv_writer.writerow([line])
+# Create a Pandas DataFrame from the list
+df = pd.DataFrame(ip_route_data, columns=["Route Data"])
+
+# Save the DataFrame to an Excel file with formatting
+output_file = "EquinixRoutesBeforeChange.xlsx"
+df.to_excel(output_file, index=False, engine='openpyxl')
 
 print(f"Show IP Route data (without timestamps) saved to {output_file}")
