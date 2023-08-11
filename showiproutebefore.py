@@ -62,5 +62,13 @@ for ip, route_output in ip_route_data.items():
     sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
     dfs.append((df, sheet_name))
 
-# Create a Pandas Excel writer using XlsxWriter as the engine
-with pd.ExcelWriter
+# Create a Pandas Excel writer
+with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
+    for df, sheet_name in dfs:
+        # Write each DataFrame to a separate worksheet with the modified sheet name
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
+        worksheet = writer.sheets[sheet_name]
+        # Adjust the column width to fit the content
+        worksheet.set_column('A:A', max(len(line) for line in df["Route Data"]))
+
+print(f"Show IP Route data (without timestamps) saved to {output_file}")
