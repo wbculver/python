@@ -2,7 +2,6 @@ from netmiko import ConnectHandler
 import re
 import pandas as pd
 import xlsxwriter
-import datetime
 
 # Variables
 username = "admin"
@@ -45,7 +44,7 @@ def get_ip_route_without_timestamps(device_ip):
 ip_route_data = {}
 
 # Retrieve "show ip route" without timestamps for each device
-for idx, ip in enumerate(device_ips):
+for ip in device_ips:
     # Add the device IP address as a key in the dictionary
     ip_route_data[ip] = get_ip_route_without_timestamps(ip)
 
@@ -54,11 +53,13 @@ output_file = "EquinixRoutesBeforeChange.xlsx"
 
 # Create a Pandas DataFrame for each device
 dfs = []
-for idx, (ip, route_output) in enumerate(ip_route_data.items()):
-    # Create a unique sheet name based on the device index and timestamp
-    sheet_name = f"Device_{idx+1}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+for ip, route_output in ip_route_data.items():
+    # Create a list of route entries with a new line for each entry
+    route_entries = route_output.split("\n")
     # Create a DataFrame with a single column and the "Routes for Device IP" header
-    df = pd.DataFrame({"Route Data": [f"Routes for Device IP: {ip}", route_output]})
+    df = pd.DataFrame({"Route Data": [f"Routes for Device IP: {ip}"] + route_entries})
+    # Remove invalid characters from sheet name
+    sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
     dfs.append((df, sheet_name))
 
 # Create a Pandas Excel writer using XlsxWriter as the engine
