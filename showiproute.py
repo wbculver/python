@@ -3,9 +3,8 @@ import re
 import csv
 
 # Variables
-username = "YOUR_USERNAME"
-password = "YOUR_PASSWORD"
-enable_password = "YOUR_ENABLE_PASSWORD"
+username = "admin"
+password = "Eve1234!"
 
 # List of device IP addresses to download "show ip route" from
 device_ips = [
@@ -22,14 +21,10 @@ def get_ip_route_without_timestamps(device_ip):
         "ip": device_ip,
         "username": username,
         "password": password,
-        "secret": enable_password,  # If you need to enter enable mode
     }
 
     # Connect to the device
     net_connect = ConnectHandler(**device)
-
-    # Enter enable mode if needed
-    net_connect.enable()
 
     # Send the "show ip route" command and retrieve the output
     output = net_connect.send_command("show ip route")
@@ -56,7 +51,7 @@ for ip in device_ips:
     ip_route_data.append(ip_route_output)
 
 # Save the IP route data to a CSV file
-output_file = "show_ip_route_output.csv"
+output_file = "EquinixRoutesBeforeChange.csv"
 with open(output_file, 'w', newline='') as csv_file:
     csv_writer = csv.writer(csv_file)
     for route_output in ip_route_data:
