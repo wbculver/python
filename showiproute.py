@@ -45,7 +45,7 @@ def get_ip_route_without_timestamps(device_ip):
 ip_route_data = {}
 
 # Retrieve "show ip route" without timestamps for each device
-for ip in device_ips:
+for idx, ip in enumerate(device_ips):
     # Add the device IP address as a key in the dictionary
     ip_route_data[ip] = get_ip_route_without_timestamps(ip)
 
@@ -54,14 +54,11 @@ output_file = "EquinixRoutesBeforeChange.xlsx"
 
 # Create a Pandas DataFrame for each device
 dfs = []
-for ip, route_output in ip_route_data.items():
-    # Truncate the device IP address to fit within Excel's 31-character limit
-    truncated_ip = ip[:31]
-    # Add a timestamp to the sheet name for uniqueness and readability
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    sheet_name = f"Routes_{truncated_ip}_{timestamp}"
+for idx, (ip, route_output) in enumerate(ip_route_data.items()):
+    # Create a unique sheet name based on the device index and timestamp
+    sheet_name = f"Device_{idx+1}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
     # Create a DataFrame with a single column and the "Routes for Device IP" header
-    df = pd.DataFrame({"Route Data": ["Routes for Device IP:", route_output]})
+    df = pd.DataFrame({"Route Data": [f"Routes for Device IP: {ip}", route_output]})
     dfs.append((df, sheet_name))
 
 # Create a Pandas Excel writer using XlsxWriter as the engine
