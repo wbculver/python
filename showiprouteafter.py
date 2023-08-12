@@ -102,27 +102,13 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         # Write the comparison data to the Excel sheet
         df_comparison.to_excel(writer, sheet_name=f"{sheet_name}_Added_Removed", index=False)
 
-        # Identify the changed prefix and highlight it red in the first sheet
-        first_sheet_name = sheet_name + "_Added_Removed"
-        if first_sheet_name in writer.sheets:
-            df_first_sheet = df_comparison[df_comparison["Added Routes"].str.strip() != ""]
-            df_first_sheet.to_excel(writer, sheet_name=first_sheet_name, index=False)
+        # Original and new route data
+        df_original = pd.DataFrame(original_routes, columns=["Original Route"])
+        df_new = pd.DataFrame(new_routes, columns=["New Route"])
 
-            # Get the worksheet
-            worksheet = writer.sheets[first_sheet_name]
-
-            # Create a format for red font color
-            red_font = writer.book.add_format({'font_color': 'red'})
-
-            # Get the column letter for the "Added Routes" column
-            col_letter = chr(ord('A') + df_first_sheet.columns.get_loc("Added Routes"))
-
-            # Apply red font color to the changed prefix (route)
-            for idx, row in df_first_sheet.iterrows():
-                route = row["Added Routes"].strip()
-                worksheet.write_formula(f"{col_letter}{idx+2}",
-                                        f'IF({col_letter}{idx+2}="{route}", "{route}", {col_letter}{idx+2})',
-                                        red_font)
+        # Write the original and new route data to the Excel sheet
+        df_original.to_excel(writer, sheet_name=f"{sheet_name}_Original", index=False)
+        df_new.to_excel(writer, sheet_name=f"{sheet_name}_New", index=False)
 
 # Print the path to the output file
 print(f"Route comparison data saved to {output_file}")
