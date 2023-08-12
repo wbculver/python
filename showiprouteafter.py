@@ -86,4 +86,4 @@ with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
         # Find changes
         for route_before, route_after in zip(initial_routes, route_after):
             if route_before.strip() != route_after.strip():
-                df_changes = df_changes.append({"Change Type": "Route Data", "Before":
+                df_changes
