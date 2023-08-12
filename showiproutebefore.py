@@ -31,16 +31,21 @@ def get_ip_route_without_timestamps(device_ip):
 
     try:
         # Send the "terminal length 0" command
-        net_connect.send_command("terminal length 0", expect_string=r"#")
+        net_connect.send_command_timing("terminal length 0")
 
         # Send the "show ip route" command and retrieve the output
-        output = net_connect.send_command("show ip route", expect_string=r"#")
+        output = net_connect.send_command_timing("show ip route")
 
-        # Define a regex pattern to match the timestamp format (e.g., 00:00:00 or 12:34:56)
-        pattern = re.compile(r'\d{2}:\d{2}:\d{2}')
-
-        # Remove timestamps from each line
-        ip_route_output = "\n".join([pattern.sub('', line) for line in output.split("\n")])
+        # Define regex patterns to match timestamps (e.g., 00:00:00 or 12:34:56)
+        # and relative time format (e.g., 5w1d, 1d5h)
+        timestamp_pattern = re.compile(r'\d{2}:\d{2}:\d{2}')
+        relative_time_pattern = re.compile(r'\d+[wdhms]')
+        
+        # Remove timestamps and relative time format from each line
+        ip_route_output = "\n".join([
+            relative_time_pattern.sub('', timestamp_pattern.sub('', line))
+            for line in output.split("\n")
+        ])
 
         return ip_route_output
     finally:
