@@ -11,6 +11,7 @@ password = input("Enter your password: ")
 # List of device IP addresses to compare "show ip route" with the previous script output
 device_ips = [
     "10.111.237.200",
+    # Exclude 10.111.237.201
 ]
 
 # Load the previous script output (before change)
@@ -71,10 +72,6 @@ for ip in tqdm(device_ips, desc="Retrieving current IP routes"):
 output_file = "EquinixRoutesComparison.xlsx"
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
     for ip, current_route_output in current_ip_route_data.items():
-        # Exclude the device with IP "10.111.237.201"
-        if ip == "10.111.237.201":
-            continue
-
         sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
 
         # Original routes from the before script output
