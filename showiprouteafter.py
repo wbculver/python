@@ -67,11 +67,16 @@ for ip, df in tqdm(zip(device_info, dfs), desc="Comparing IP routes"):
                 "old_route": route_entry,
             })
 
-# Save the differences to an Excel file
-output_file = "EquinixRoutesAfterChange.xlsx"
+# Save the differences to an Excel file with a separate sheet for comparison results
+output_file = "EquinixRoutesComparisonOutput.xlsx"
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-    for ip, diff_list in tqdm(differences.items(), desc="Writing to Excel"):
-        diff_df = pd.DataFrame(diff_list, columns=["Index", "Old Route"])
-        diff_df.to_excel(writer, sheet_name=ip, index=False)
+    # Write original IP route data to the first sheet (Sheet 1)
+    for sheet_num, (ip, df) in enumerate(zip(device_info, dfs), start=1):
+        df.to_excel(writer, sheet_name=f"Device{sheet_num}", index=False)
 
-print(f"Differences in IP routes saved to {output_file}")
+    # Write the comparison results to the second sheet (Sheet 2)
+    for ip, diff_list in tqdm(differences.items(), desc="Writing comparison to Excel"):
+        diff_df = pd.DataFrame(diff_list, columns=["Index", "Old Route"])
+        diff_df.to_excel(writer, sheet_name="ComparisonResults", index=False)
+
+print(f"Differences in IP routes comparison saved to {output_file}")
