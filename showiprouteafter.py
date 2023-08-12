@@ -62,4 +62,34 @@ def compare_routes(old_routes, new_routes):
 ip_route_data_after = {}
 for ip in device_ips:
     route_output_after = get_ip_route_without_timestamps(ip)
-    ip_route_data_after
+    ip_route_data_after[ip] = route_output_after
+
+# Load the initial route data from the previously created "before" Excel file
+initial_file = "EquinixRoutesBeforeChange.xlsx"
+df_initial = pd.read_excel(initial_file, header=None)
+initial_routes = df_initial[0].tolist()
+
+# Split the initial routes into route entries
+initial_routes = [route.split('\n') if isinstance(route, str) else [] for route in initial_routes]
+
+# Compare the routes before and after
+changes = {}
+for ip, route_before in zip(device_ips, initial_routes):
+    route_after = ip_route_data_after[ip].split('\n')
+    changes[ip] = compare_routes(route_before, route_after)
+
+# Save the changes to "EquinixRoutesAfterChange.xlsx"
+output_file_after = "EquinixRoutesAfterChange.xlsx"
+with pd.ExcelWriter(output_file_after, engine='xlsxwriter') as writer:
+    for ip, change_data in changes.items():
+        # Create a DataFrame with the change information
+        df_changes = pd.DataFrame(change_data, columns=["Line Number", "Before", "After"])
+        # Write the DataFrame to a worksheet named after the IP address
+        df_changes.to_excel(writer, sheet_name=ip, index=False)
+        worksheet = writer.sheets[ip]
+        # Adjust the column widths
+        worksheet.set_column('A:A', 12)
+        worksheet.set_column('B:B', 60)
+        worksheet.set_column('C:C', 60)
+
+print(f"Show IP Route data changes saved to {output_file_after}")
