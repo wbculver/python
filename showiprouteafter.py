@@ -103,10 +103,14 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         df_comparison = df_comparison[df_comparison["Previous Routes"].str.strip() != ""]
         df_comparison = df_comparison[df_comparison["Changed Routes"].str.strip() != ""]
 
+        # Move entries from column C (Changed Routes) to column D (Diff Out) at the top
+        df_comparison["Diff Out"].fillna(df_comparison["Changed Routes"], inplace=True)
+        df_comparison.drop(columns=["Changed Routes"], inplace=True)
+
         # Write the comparison data to the Excel sheet
         df_comparison.to_excel(writer, sheet_name=sheet_name, index=False)
 
-        # Highlight rows in column C (Changed Routes) in red
+        # Highlight rows in column C (Diff Out) in red
         worksheet = writer.sheets[sheet_name]
         red_font = writer.book.add_format({'font_color': 'red'})
         worksheet.conditional_format(1, 2, df_comparison.shape[0], 2, {'type': 'text', 'criteria': 'containing', 'value': '*', 'format': red_font})
