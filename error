@@ -1,9 +1,18 @@
 bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiprouteafter.py
-Enter the username: brc8990s
-Enter the password:
-Loading Excel data: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:06<00:00,  1.21it/s]
-Retrieving and comparing IP routes:   0%|                                                                                                        | 0/8 [00:00<?, ?it/s]Error: Unable to retrieve IP route data from 10.145.32.20. Authentication failed.
-Retrieving and comparing IP routes:   0%|                                                                                                        | 0/8 [00:00<?, ?it/s]
+Enter your username: brc8990s
+Enter your password: #m@rnwmU(Q2j.9NE
+Loading Excel data: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:06<00:00,  1.32it/s]
+Retrieving and comparing IP routes:  25%|████████████████████████                                                                        | 2/8 [00:15<00:49,  8.25s/it]Error: Unable to retrieve IP route data from 10.128.1.4.
+Pattern not detected: 'VA\\-EQX\\-HUM\\-A1\\-1\\-R1\\#' in output.
+
+Things you might try to fix this:
+1. Explicitly set your pattern using the expect_string argument.
+2. Increase the read_timeout to a larger value.
+
+You can also look at the Netmiko session_log or debug log for more information.
+
+
+Retrieving and comparing IP routes:  25%|████████████████████████                                                                        | 2/8 [00:28<01:24, 14.13s/it]
 Traceback (most recent call last):
   File "showiprouteafter.py", line 74, in <module>
     route_entries_new = route_output.split("\n")
