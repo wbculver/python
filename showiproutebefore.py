@@ -3,10 +3,11 @@ import re
 import pandas as pd
 import xlsxwriter
 from tqdm import tqdm
+import getpass
 
 # Variables
-username = "admin"
-password = "Eve1234!"
+username = input("Enter your username: ")
+password = getpass.getpass("Enter your password: ")
 
 # List of device IP addresses to download "show ip route" from
 device_ips = [
