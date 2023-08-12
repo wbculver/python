@@ -41,42 +41,41 @@ for sheet_name in tqdm(pd.ExcelFile(input_file).sheet_names, desc="Loading Excel
     df = pd.read_excel(input_file, sheet_name=sheet_name)
     dfs.append(df)
 
-# Retrieve the "show ip route" output for the devices
-ip_route_data = {}
-for device in tqdm(device_info, desc="Retrieving IP routes"):
+# Create a dictionary to store the differences between the two sets of IP route data
+differences = {}
+
+# Retrieve the "show ip route" output for the devices and compare the data
+for device in tqdm(device_info, desc="Retrieving and comparing IP routes"):
     ip = device["ip"]
     username = device["username"]
     password = device["password"]
     ip_route_data[ip] = get_ip_route_with_ssh(ip, username, password)
 
-# Create a dictionary to store the differences between the two sets of IP route data
-differences = {}
-
-# Compare the IP route data for each device
-for ip, df in tqdm(zip(device_info, dfs), desc="Comparing IP routes"):
+    # Compare the IP route data for this device
+    df = dfs[device_info.index(device)]  # Get the corresponding DataFrame
     route_entries = df["Route Data"].tolist()
-    route_output = ip_route_data[ip["ip"]]
+    route_output = ip_route_data[ip]
     route_entries_new = route_output.split("\n")
 
     for index, route_entry in enumerate(route_entries):
         if route_entry not in route_entries_new:
-            if ip["ip"] not in differences:
-                differences[ip["ip"]] = []
-            differences[ip["ip"]].append({
+            if ip not in differences:
+                differences[ip] = []
+            differences[ip].append({
                 "index": index,
                 "old_route": route_entry,
             })
 
-# Save the differences to an Excel file with a separate sheet for comparison results
+# Save the differences to an Excel file with separate sheets for original data and comparison results
 output_file = "EquinixRoutesComparisonOutput.xlsx"
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-    # Write original IP route data to the first sheet (Sheet 1)
-    for sheet_num, (ip, df) in enumerate(zip(device_info, dfs), start=1):
-        df.to_excel(writer, sheet_name=f"Device{sheet_num}", index=False)
+    # Write the original IP route data to separate sheets
+    for device, df in zip(device_info, dfs):
+        df.to_excel(writer, sheet_name=f"Device_{device['ip']}", index=False)
 
-    # Write the comparison results to the second sheet (Sheet 2)
+    # Write the comparison results to a separate sheet
     for ip, diff_list in tqdm(differences.items(), desc="Writing comparison to Excel"):
         diff_df = pd.DataFrame(diff_list, columns=["Index", "Old Route"])
-        diff_df.to_excel(writer, sheet_name="ComparisonResults", index=False)
+        diff_df.to_excel(writer, sheet_name=f"Comparison_{ip}", index=False)
 
 print(f"Differences in IP routes comparison saved to {output_file}")
