@@ -64,6 +64,13 @@ def save_ip_route_to_excel(data, output_file, sheet_name="{} Route".format(devic
 for ip in device_ips:
     route_output = get_ip_route_without_timestamps(ip)
 
+    # Compare the output to the file EquinixRoutesBeforeChange.xlsx
+    with open("EquinixRoutesBeforeChange.xlsx", "r") as f:
+        equinixroutesbeforechange = f.read()
+
+    if route_output != equinixroutesbeforechange:
+        print(f"There are changes to the routes on device {ip}")
+
     # Save the output to the Excel file
     with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
         df = pd.DataFrame({"Route Data": route_output})
