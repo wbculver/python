@@ -84,8 +84,9 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
 
     # Write the current IP route data (after change) to separate sheets
     for device_ip, route_output in ip_route_data.items():
-        df = pd.DataFrame({"Route Data": route_output.split("\n")})
-        df.to_excel(writer, sheet_name=f"After_Device_{device_ip}", index=False)
+        # Create a DataFrame without timestamps
+        df_after = pd.DataFrame({"Route Data": [re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", route_output)]})
+        df_after.to_excel(writer, sheet_name=f"After_Device_{device_ip}", index=False)
 
     # Write the differences to a separate sheet for each device
     for device_ip, diff_entries in differences.items():
