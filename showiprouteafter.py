@@ -74,4 +74,12 @@ with pd.ExcelWriter(output_file_after, engine='xlsxwriter') as writer:
         if change_data:
             # Create a DataFrame with the change information
             df_changes = pd.DataFrame(change_data, columns=["Line Number", "Before", "After"])
-            # Write
+            # Write the DataFrame to a worksheet named after the IP address
+            df_changes.to_excel(writer, sheet_name=ip, index=False)
+            worksheet = writer.sheets[ip]
+            # Adjust the column widths
+            worksheet.set_column('A:A', 12)
+            worksheet.set_column('B:B', 40)
+            worksheet.set_column('C:C', 40)
+
+print(f"Show IP Route data changes saved to {output_file_after}")
