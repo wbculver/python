@@ -22,12 +22,15 @@ def get_ip_route_without_timestamps(device_ip):
         "ip": device_ip,
         "username": username,
         "password": password,
-        "timeout": 30,  # Increase the timeout if needed
-        "session_log": "session.log",  # Save session log for debugging
+        "timeout": 60,  # Increase the timeout if needed
+        "session_log": f"session_{device_ip}.log",  # Save session log for debugging
     }
 
     # Connect to the device
     net_connect = ConnectHandler(**device)
+
+    # Send the "terminal length 0" command
+    net_connect.send_command("terminal length 0")
 
     # Send the "show ip route" command and retrieve the output
     output = net_connect.send_command("show ip route", expect_string=r"#")
