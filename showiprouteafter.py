@@ -84,27 +84,32 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
 
         # Create DataFrames for the comparison
         df_comparison = pd.DataFrame({
-            "Added Routes": new_routes,
-            "Removed Routes": original_routes,
+            "Previous Routes": new_routes,
+            "Changed Routes": original_routes,
         })
 
         # Identify the changed prefixes
-        changed_prefixes = df_comparison[df_comparison["Added Routes"] != df_comparison["Removed Routes"]]["Added Routes"].tolist()
+        changed_prefixes = df_comparison[df_comparison["Previous Routes"] != df_comparison["Changed Routes"]]["Previous Routes"].tolist()
 
         # Include the previous row above the changed route
         prev_row = None
         for idx, row in df_comparison.iterrows():
-            if row["Added Routes"] in changed_prefixes:
+            if row["Previous Routes"] in changed_prefixes:
                 if prev_row:
-                    df_comparison.at[idx, "Previous Row"] = prev_row
-            prev_row = row["Added Routes"]
+                    df_comparison.at[idx, "Diff Out"] = prev_row
+            prev_row = row["Previous Routes"]
 
-        # Filter out blank lines in the added and removed routes
-        df_comparison = df_comparison[df_comparison["Added Routes"].str.strip() != ""]
-        df_comparison = df_comparison[df_comparison["Removed Routes"].str.strip() != ""]
+        # Filter out blank lines in the previous and changed routes
+        df_comparison = df_comparison[df_comparison["Previous Routes"].str.strip() != ""]
+        df_comparison = df_comparison[df_comparison["Changed Routes"].str.strip() != ""]
 
         # Write the comparison data to the Excel sheet
         df_comparison.to_excel(writer, sheet_name=sheet_name, index=False)
+
+        # Highlight rows in column C (Changed Routes) in red
+        worksheet = writer.sheets[sheet_name]
+        red_font = writer.book.add_format({'font_color': 'red'})
+        worksheet.conditional_format(1, 2, df_comparison.shape[0], 2, {'type': 'text', 'criteria': 'containing', 'value': '*', 'format': red_font})
 
 # Print the path to the output file
 print(f"Route comparison data saved to {output_file}")
