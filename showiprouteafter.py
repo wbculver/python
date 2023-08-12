@@ -31,10 +31,13 @@ def get_ip_route_without_timestamps(device_ip):
     # Disconnect from the device
     net_connect.disconnect()
 
-    # Remove timestamps from each line
-    ip_route_output = "\n".join(line.split()[1:] for line in output.split("\n") if line.strip())
+    # Remove timestamps and unnecessary information
+    route_data = []
+    for line in output.split("\n"):
+        if "via" in line:
+            route_data.append(line.strip())
 
-    return ip_route_output
+    return "\n".join(route_data)
 
 # Function to save IP route data to an Excel file
 def save_ip_route_to_excel(data, output_file):
@@ -61,17 +64,15 @@ for ip in device_ips:
     changes[ip] = []
 
     # Find the corresponding route table entries in the initial data
-    initial_routes = df_initial[df_initial[0] == ip][1].tolist()
+    initial_route = df_initial[df_initial[0] == ip][1].tolist()
 
     # Compare the route data before and after
     if ip in ip_route_data_after:
         route_after = ip_route_data_after[ip].split('\n')
-        # Remove empty lines and leading/trailing whitespace
-        route_after = [line.strip() for line in route_after if line.strip()]
         # Find changes
-        for line_num, (route_before, route_after) in enumerate(zip(initial_routes, route_after), start=1):
-            if route_before != route_after:
-                changes[ip].append(("Route Data", route_before, route_after))
+        for line_num, (route_before, route_after) in enumerate(zip(initial_route, route_after), start=1):
+            if route_before.strip() != route_after.strip():
+                changes[ip].append(("Route Data", route_before.strip(), route_after.strip()))
 
 # Save the changes to "EquinixRoutesAfterChange.xlsx"
 output_file_after = "EquinixRoutesAfterChange.xlsx"
