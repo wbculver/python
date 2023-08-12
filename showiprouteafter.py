@@ -78,30 +78,14 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         original_routes = [route.strip() for route in original_routes if route.strip()]
         new_routes = [route.strip() for route in new_routes if route.strip()]
 
-        # Create dictionaries for the comparison
-        original_dict = {route: True for route in original_routes}
-        new_dict = {route: True for route in new_routes}
-
-        # Identify the changed and removed prefixes
-        changed_routes = []
-        removed_routes = []
-        for route in original_dict:
-            if route not in new_dict:
-                removed_routes.append(route)
-            else:
-                del new_dict[route]
-
-        # Include the previous route above the changed route
-        for route in new_dict:
-            if route in removed_routes:
-                index = removed_routes.index(route)
-                if index > 0:
-                    changed_routes.append(removed_routes[index - 1])
+        # Identify added and removed routes
+        added_routes = [route for route in new_routes if route not in original_routes]
+        removed_routes = [route for route in original_routes if route not in new_routes]
 
         # Create a DataFrame for the comparison
         df_comparison = pd.DataFrame({
-            "Previous Routes": changed_routes,
-            "Changed Routes": removed_routes,
+            "Added Routes": added_routes,
+            "Removed Routes": removed_routes,
         })
 
         # Write the comparison data to the Excel sheet
