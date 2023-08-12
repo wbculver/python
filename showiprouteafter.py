@@ -76,30 +76,29 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
 
         # Original routes from the previous script output
         original_routes = previous_ip_route_data.get(sheet_name, [])
-        current_routes = current_route_output.split("\n")
+        new_routes = current_route_output.split("\n")
 
         # Make both lists the same length by padding with blank lines
-        max_len = max(len(original_routes), len(current_routes))
-        original_routes.extend([''] * (max_len - len(original_routes)))
-        current_routes.extend([''] * (max_len - len(current_routes)))
+        max_len = max(len(original_routes), len(new_routes))
+        original_routes += [''] * (max_len - len(original_routes))
+        new_routes += [''] * (max_len - len(new_routes))
 
-        # Filter out blank lines before performing the comparison
-        original_routes = [route for route in original_routes if route.strip()]
-        current_routes = [route for route in current_routes if route.strip()]
-
-        # Compare routes and create a summary sheet
-        added_routes = [route for route in current_routes if route not in original_routes]
-        removed_routes = [route for route in original_routes if route not in current_routes]
-        unchanged_routes = [route for route in current_routes if route in original_routes]
-
+        # Create a DataFrame for the comparison
         df_comparison = pd.DataFrame({
             "Original Routes": original_routes,
-            "New Routes": current_routes,
-            "Added Routes": added_routes,
-            "Removed Routes": removed_routes,
-            "Unchanged Routes": unchanged_routes,
+            "New Routes": new_routes,
         })
 
+        # Filter out rows with blank routes
+        df_comparison = df_comparison[df_comparison["Original Routes"].str.strip() != ""]
+        df_comparison = df_comparison[df_comparison["New Routes"].str.strip() != ""]
+
+        # Compare routes
+        df_comparison["Added Routes"] = df_comparison[~df_comparison["New Routes"].isin(df_comparison["Original Routes"])]["New Routes"]
+        df_comparison["Removed Routes"] = df_comparison[~df_comparison["Original Routes"].isin(df_comparison["New Routes"])]["Original Routes"]
+        df_comparison["Unchanged Routes"] = df_comparison[df_comparison["Original Routes"].isin(df_comparison["New Routes"])]["New Routes"]
+
+        # Write the comparison data to the Excel sheet
         df_comparison.to_excel(writer, sheet_name=f"{sheet_name}_Comparison", index=False)
 
 # Print the path to the output file
