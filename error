@@ -1,13 +1,24 @@
-bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiproutebefore.py
-Retrieving IP routes:   0%|                                                                                                                      | 0/1 [00:00<?, ?it/s]
+bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiprouteafter.py
+Retrieving routes:   0%|                                                                                                                         | 0/1 [00:12<?, ?it/s]
 Traceback (most recent call last):
-  File "showiproutebefore.py", line 62, in <module>
-    ip_route_data[ip] = get_ip_route_without_timestamps(ip)
-  File "showiproutebefore.py", line 37, in get_ip_route_without_timestamps
-    net_connect = ConnectHandler(**device)
-  File "/usr/local/lib/python3.8/dist-packages/netmiko/ssh_dispatcher.py", line 388, in ConnectHandler
-    return ConnectionClass(*args, **kwargs)
-TypeError: __init__() got an unexpected keyword argument 'read_timeout'
+  File "showiprouteafter.py", line 62, in <module>
+    route_output_after = get_ip_route_without_timestamps(ip)
+  File "showiprouteafter.py", line 37, in get_ip_route_without_timestamps
+    output = net_connect.send_command("show ip route")
+  File "/usr/local/lib/python3.8/dist-packages/netmiko/utilities.py", line 592, in wrapper_decorator
+    return func(self, *args, **kwargs)
+  File "/usr/local/lib/python3.8/dist-packages/netmiko/base_connection.py", line 1790, in send_command
+    raise ReadTimeout(msg)
+netmiko.exceptions.ReadTimeout:
+Pattern not detected: 'IL\\-EQX\\-HUM\\-A2\\-B\\-S1\\#\\ terminal\\ length\\ 0' in output.
+
+Things you might try to fix this:
+1. Explicitly set your pattern using the expect_string argument.
+2. Increase the read_timeout to a larger value.
+
+You can also look at the Netmiko session_log or debug log for more information.
+
+
 Error in sys.excepthook:
 Traceback (most recent call last):
   File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 72, in apport_excepthook
@@ -34,10 +45,19 @@ AttributeError: module 'lib' has no attribute 'X509_V_FLAG_CB_ISSUER_CHECK'
 
 Original exception was:
 Traceback (most recent call last):
-  File "showiproutebefore.py", line 62, in <module>
-    ip_route_data[ip] = get_ip_route_without_timestamps(ip)
-  File "showiproutebefore.py", line 37, in get_ip_route_without_timestamps
-    net_connect = ConnectHandler(**device)
-  File "/usr/local/lib/python3.8/dist-packages/netmiko/ssh_dispatcher.py", line 388, in ConnectHandler
-    return ConnectionClass(*args, **kwargs)
-TypeError: __init__() got an unexpected keyword argument 'read_timeout'
+  File "showiprouteafter.py", line 62, in <module>
+    route_output_after = get_ip_route_without_timestamps(ip)
+  File "showiprouteafter.py", line 37, in get_ip_route_without_timestamps
+    output = net_connect.send_command("show ip route")
+  File "/usr/local/lib/python3.8/dist-packages/netmiko/utilities.py", line 592, in wrapper_decorator
+    return func(self, *args, **kwargs)
+  File "/usr/local/lib/python3.8/dist-packages/netmiko/base_connection.py", line 1790, in send_command
+    raise ReadTimeout(msg)
+netmiko.exceptions.ReadTimeout:
+Pattern not detected: 'IL\\-EQX\\-HUM\\-A2\\-B\\-S1\\#\\ terminal\\ length\\ 0' in output.
+
+Things you might try to fix this:
+1. Explicitly set your pattern using the expect_string argument.
+2. Increase the read_timeout to a larger value.
+
+You can also look at the Netmiko session_log or debug log for more information.
