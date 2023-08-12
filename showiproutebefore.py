@@ -16,20 +16,7 @@ device_ips = [
 ]
 
 # Function to retrieve "show ip route" for a device and remove timestamps
-def get_ip_route_without_timestamps(device_ip):
-    # Cisco device information
-    device = {
-        "device_type": "cisco_ios",
-        "ip": device_ip,
-        "username": username,
-        "password": password,
-        "timeout": 60,  # Increase the timeout if needed
-        "global_delay_factor": 2,  # Add a delay factor to allow more time for the command output
-    }
-
-    # Connect to the device
-    net_connect = ConnectHandler(**device)
-
+def get_ip_route_without_timestamps(device_ip, net_connect):
     try:
         # Send the "terminal length 0" command
         net_connect.send_command_timing("terminal length 0")
@@ -41,7 +28,7 @@ def get_ip_route_without_timestamps(device_ip):
         # and relative time format (e.g., 5w1d, 1d5h)
         timestamp_pattern = re.compile(r'\d{2}:\d{2}:\d{2}')
         relative_time_pattern = re.compile(r'\d+[wdhms]')
-        
+
         # Remove timestamps and relative time format from each line
         ip_route_output = "\n".join([
             relative_time_pattern.sub('', timestamp_pattern.sub('', line))
@@ -56,9 +43,28 @@ def get_ip_route_without_timestamps(device_ip):
 # Create a dictionary to store the "show ip route" output for each device
 ip_route_data = {}
 
-# Retrieve "show ip route" without timestamps for each device
+# Create a Netmiko connection for SSH
+net_connect_common = {
+    "device_type": "cisco_ios",
+    "username": username,
+    "password": password,
+    "timeout": 60,
+    "global_delay_factor": 2,
+}
+
 for ip in tqdm(device_ips, desc="Retrieving IP routes"):
-    ip_route_data[ip] = get_ip_route_without_timestamps(ip)
+    # Add the IP address to the common connection parameters
+    net_connect_common["ip"] = ip
+
+    # Connect to the device
+    net_connect = ConnectHandler(**net_connect_common)
+
+    try:
+        # Retrieve "show ip route" without timestamps for the device
+        ip_route_data[ip] = get_ip_route_without_timestamps(ip, net_connect)
+    finally:
+        # Disconnect from the device
+        net_connect.disconnect()
 
 # Save the IP route data to an Excel file
 output_file = "EquinixRoutesBeforeChange.xlsx"
@@ -81,6 +87,4 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         df.to_excel(writer, sheet_name=sheet_name, index=False)
         worksheet = writer.sheets[sheet_name]
         # Adjust the column width to fit the content
-        worksheet.set_column('A:A', max(len(line) for line in df["Route Data"]))
-
-print(f"Show IP Route data (without timestamps) saved to {output_file}")
+        worksheet.set_column('A:A', max(len(line) for line
