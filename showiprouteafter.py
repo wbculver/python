@@ -81,13 +81,18 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         # Identify changed routes
         changed_routes = [route for route in new_routes if route not in original_routes]
 
-        # Create a DataFrame for the changed routes
+        # Create a DataFrame for the changed routes with previous route
         df_changed_routes = pd.DataFrame({
             "Changed Routes": changed_routes,
         })
 
-        # Write the changed routes to the Excel sheet
+        # Add a column for the previous route
+        df_changed_routes["Previous Routes"] = df_changed_routes["Changed Routes"].apply(
+            lambda route: [original for original in original_routes if original.startswith(route.split()[0])]
+        )
+
+        # Write the changed routes with previous route to the Excel sheet
         df_changed_routes.to_excel(writer, sheet_name=sheet_name, index=False)
 
 # Print the path to the output file
-print(f"Route comparison data (changed routes) saved to {output_file}")
+print(f"Route comparison data (changed routes with previous routes) saved to {output_file}")
