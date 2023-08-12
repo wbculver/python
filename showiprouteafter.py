@@ -21,8 +21,9 @@ def get_ip_route_without_timestamps(device_ip, username, password):
         # Establish SSH connection to the device
         net_connect = ConnectHandler(**device)
 
-        # Send the "show ip route" command
-        output = net_connect.send_command("show ip route", expect_string="") # Expect a blank line
+        # Send the "show ip route" command and wait for output
+        net_connect.send_command("show ip route", expect_string=r"\S+")
+        output = net_connect.send_command("show ip route", expect_string=r"EOF_MARKER_FOR_COMMAND_EXECUTION")
 
         # Close the SSH connection
         net_connect.disconnect()
@@ -36,8 +37,12 @@ def get_ip_route_without_timestamps(device_ip, username, password):
         traceback.print_exc()  # Print the full traceback for better error analysis
         return None
 
-# Load the Excel file with the saved IP route data before the change
-input_file_before = "EquinixRoutesBeforeChange.xlsx"
+# Load the Excel file with the saved IP route data (before)
+input_file = "EquinixRoutesBeforeChange.xlsx"
+
+# Prompt for the username and password
+username = input("Enter your username: ")
+password = input("Enter your password: ")
 
 # Define device IP addresses to download "show ip route" from
 device_ips = [
@@ -51,56 +56,57 @@ device_ips = [
     "10.128.2.154",
 ]
 
-# Create a Pandas DataFrame for the "before" data
+# Create a list of DataFrames to store the "before" IP route data
 dfs_before = []
-for sheet_name in tqdm(pd.ExcelFile(input_file_before).sheet_names, desc="Loading Excel data (before)"):
-    df = pd.read_excel(input_file_before, sheet_name=sheet_name)
+for device_ip in tqdm(device_ips, desc="Loading Excel data (before)"):
+    df = pd.read_excel(input_file, sheet_name=device_ip)
     dfs_before.append(df)
 
-# Prompt for the username and password
-username = input("Enter your username: ")
-password = input("Enter your password: ")
+# Create a dictionary to store the differences between the "before" and "after" sets of IP route data
+differences = {}
 
-# Create a Pandas DataFrame for the "after" data
-dfs_after = []
+# Retrieve the "show ip route" output for the devices and compare the data
 for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
     try:
+        # Get the "before" DataFrame for this device
+        df_before = dfs_before[device_ips.index(device_ip)]
+
+        # Retrieve the "after" IP route data
         route_output_after = get_ip_route_without_timestamps(device_ip, username, password)
-        if not route_output_after:
-            continue  # Skip this device if data retrieval failed
 
-        # Compare the IP route data for this device with the "before" data
-        df_before = dfs_before[device_ips.index(device_ip)]  # Get the corresponding DataFrame
-        route_entries_before = df_before["Route Data"].tolist()
-        route_entries_after = route_output_after.split("\n")
+        if route_output_after:
+            # Split route entries and remove timestamps
+            route_entries_before = [re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", entry) for entry in df_before["Route Data"].tolist()]
+            route_entries_after = route_output_after.split("\n")
 
-        # Find differences and store them in the differences dictionary
-        diff_indices = []
-        for index, route_entry in enumerate(route_entries_before):
-            if route_entry not in route_entries_after:
-                diff_indices.append(index)
-        
-        if diff_indices:
-            df_after = pd.DataFrame({
-                "Index": diff_indices,
-                "Route Data Before": [route_entries_before[idx] for idx in diff_indices],
-                "Route Data After": [route_entries_after[idx] for idx in diff_indices]
-            })
-            dfs_after.append(df_after)
+            # Find differences
+            for index, route_entry in enumerate(route_entries_before):
+                if route_entry not in route_entries_after:
+                    if device_ip not in differences:
+                        differences[device_ip] = []
+                    differences[device_ip].append({
+                        "index": index,
+                        "before_route": route_entry,
+                    })
 
+            # Store the "after" IP route data in a new sheet in the Excel file
+            df_after = pd.DataFrame({"Route Data (After)": route_entries_after})
+            with pd.ExcelWriter(input_file, engine="openpyxl", mode="a") as writer:
+                df_after.to_excel(writer, sheet_name=f"{device_ip}_After", index=False)
     except Exception as e:
         print(f"An error occurred while processing {device_ip}. {str(e)}")
         traceback.print_exc()  # Print the full traceback for better error analysis
 
-# Save the data to an Excel file
+# Save the differences to an Excel file with a separate sheet for comparison results
 output_file = "EquinixRoutesComparisonOutput.xlsx"
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-    # Write the "before" data to separate sheets
+    # Write the original IP route data to separate sheets
     for device_ip, df in zip(device_ips, dfs_before):
-        df.to_excel(writer, sheet_name=f"Device_{device_ip}_Before", index=False)
+        df.to_excel(writer, sheet_name=f"Device_{device_ip}", index=False)
 
-    # Write the "after" data to separate sheets
-    for device_ip, df in zip(device_ips, dfs_after):
-        df.to_excel(writer, sheet_name=f"Device_{device_ip}_After", index=False)
+    # Write the comparison results to a separate sheet
+    for device_ip, diff_list in tqdm(differences.items(), desc="Writing comparison to Excel"):
+        diff_df = pd.DataFrame(diff_list, columns=["Index", "Before Route"])
+        diff_df.to_excel(writer, sheet_name=f"Comparison_{device_ip}", index=False)
 
 print(f"Differences in IP routes comparison saved to {output_file}")
