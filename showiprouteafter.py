@@ -86,6 +86,16 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         added_routes = [route for route in new_routes if route not in original_routes]
         removed_routes = [route for route in original_routes if route not in new_routes]
 
+        # Include the previous row for each "*via" entry
+        prev_row = None
+        for route in new_routes:
+            if route.startswith("*via"):
+                if prev_row:
+                    added_routes.append(prev_row)
+                prev_row = route
+            else:
+                prev_row = route
+
         # Create DataFrames for the comparison
         df_comparison = pd.DataFrame({
             "Added Routes": added_routes,
@@ -106,34 +116,6 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         # Write the original and new route data to the Excel sheet
         df_original.to_excel(writer, sheet_name=f"{sheet_name}_Original", index=False)
         df_new.to_excel(writer, sheet_name=f"{sheet_name}_New", index=False)
-
-        # Identify the changed prefix and highlight it red in the comparison sheet
-        comparison_sheet_name = f"{sheet_name}_Added_Removed"
-        if comparison_sheet_name in writer.sheets:
-            comparison_df = pd.read_excel(writer, sheet_name=comparison_sheet_name)
-            original_df = pd.read_excel(writer, sheet_name=f"{sheet_name}_Original")
-            new_df = pd.read_excel(writer, sheet_name=f"{sheet_name}_New")
-
-            # Find the changed prefixes
-            changed_prefixes = comparison_df["Added Routes"].tolist()
-
-            # Create a format for red font color
-            red_font = writer.book.add_format({'font_color': 'red'})
-
-            # Loop through the rows and highlight the changed prefixes
-            for idx, row in original_df.iterrows():
-                prefix = row["Original Route"]
-                if prefix in changed_prefixes:
-                    # Find the corresponding row index in the comparison sheet
-                    comp_idx = comparison_df[comparison_df["Added Routes"] == prefix].index
-                    if not comp_idx.empty:
-                        comp_idx = comp_idx[0]
-                        # Get the column letter for the "Added Routes" column
-                        col_letter = chr(ord('A') + comparison_df.columns.get_loc("Added Routes"))
-                        # Apply red font color to the corresponding cell in the comparison sheet
-                        comparison_df.at[comp_idx, "Added Routes"] = f'=IF({col_letter}{comp_idx+2}="{prefix}", "{prefix}", {col_letter}{comp_idx+2})'
-                        worksheet = writer.sheets[comparison_sheet_name]
-                        worksheet.write_formula(f"{col_letter}{comp_idx+2}", comparison_df.at[comp_idx, "Added Routes"], red_font)
 
 # Print the path to the output file
 print(f"Route comparison data saved to {output_file}")
