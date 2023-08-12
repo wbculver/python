@@ -76,24 +76,14 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
 
         # Original routes from the previous script output
         original_routes = previous_ip_route_data.get(sheet_name, [])
-        df_original = pd.DataFrame(original_routes, columns=["Original Routes"])
-        df_original.to_excel(writer, sheet_name=f"{sheet_name}_Original", index=False)
-
-        # New routes from the current "show ip route" output
-        new_routes = current_route_output.split("\n")
-        df_new = pd.DataFrame(new_routes, columns=["New Routes"])
-        df_new.to_excel(writer, sheet_name=f"{sheet_name}_New", index=False)
-
-        # Compare routes and create a summary sheet
-        added_routes = [route for route in new_routes if route not in original_routes]
-        removed_routes = [route for route in original_routes if route not in new_routes]
-        unchanged_routes = [route for route in new_routes if route in original_routes]
-        df_comparison = pd.DataFrame({
-            "Added Routes": added_routes,
-            "Removed Routes": removed_routes,
-            "Unchanged Routes": unchanged_routes
-        })
-        df_comparison.to_excel(writer, sheet_name=f"{sheet_name}_Comparison", index=False)
+        
+        # Ensure both lists have the same length
+        max_len = max(len(original_routes), len(current_route_output.split("\n")))
+        original_routes = original_routes + [''] * (max_len - len(original_routes))
+        new_routes = current_route_output.split("\n") + [''] * (max_len - len(current_route_output.split("\n")))
+        
+        df_original = pd.DataFrame({"Original Routes": original_routes, "New Routes": new_routes})
+        df_original.to_excel(writer, sheet_name=f"{sheet_name}_Comparison", index=False)
 
 # Print the path to the output file
 print(f"Route comparison data saved to {output_file}")
