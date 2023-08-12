@@ -56,7 +56,7 @@ for ip in device_ips:
 
 # Load the initial route data from the previously created "before" Excel file
 initial_file = "EquinixRoutesBeforeChange.xlsx"
-df_initial = pd.read_excel(initial_file, header=None)
+df_initial = pd.read_excel(initial_file)
 
 # Compare the routes before and after
 changes = {}
@@ -64,13 +64,15 @@ for ip in device_ips:
     changes[ip] = []
 
     # Find the corresponding route table entries in the initial data
-    initial_route = df_initial[df_initial[0] == ip][1].tolist()
+    initial_routes = df_initial[df_initial["Device IP"] == ip]["Route Data"].tolist()
 
     # Compare the route data before and after
     if ip in ip_route_data_after:
         route_after = ip_route_data_after[ip].split('\n')
+        # Remove empty lines and leading/trailing whitespace
+        route_after = [line.strip() for line in route_after if line.strip()]
         # Find changes
-        for line_num, (route_before, route_after) in enumerate(zip(initial_route, route_after), start=1):
+        for line_num, (route_before, route_after) in enumerate(zip(initial_routes, route_after), start=1):
             if route_before.strip() != route_after.strip():
                 changes[ip].append(("Route Data", route_before.strip(), route_after.strip()))
 
