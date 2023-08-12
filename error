@@ -1,9 +1,9 @@
 bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiproutebefore.py
-Retrieving IP routes:   0%|                                                                                                                      | 0/2 [00:00<?, ?it/s]
+Retrieving IP routes:   0%|                                                                                                                      | 0/1 [00:00<?, ?it/s]
 Traceback (most recent call last):
-  File "showiproutebefore.py", line 56, in <module>
+  File "showiproutebefore.py", line 62, in <module>
     ip_route_data[ip] = get_ip_route_without_timestamps(ip)
-  File "showiproutebefore.py", line 31, in get_ip_route_without_timestamps
+  File "showiproutebefore.py", line 37, in get_ip_route_without_timestamps
     net_connect = ConnectHandler(**device)
   File "/usr/local/lib/python3.8/dist-packages/netmiko/ssh_dispatcher.py", line 388, in ConnectHandler
     return ConnectionClass(*args, **kwargs)
@@ -34,9 +34,9 @@ AttributeError: module 'lib' has no attribute 'X509_V_FLAG_CB_ISSUER_CHECK'
 
 Original exception was:
 Traceback (most recent call last):
-  File "showiproutebefore.py", line 56, in <module>
+  File "showiproutebefore.py", line 62, in <module>
     ip_route_data[ip] = get_ip_route_without_timestamps(ip)
-  File "showiproutebefore.py", line 31, in get_ip_route_without_timestamps
+  File "showiproutebefore.py", line 37, in get_ip_route_without_timestamps
     net_connect = ConnectHandler(**device)
   File "/usr/local/lib/python3.8/dist-packages/netmiko/ssh_dispatcher.py", line 388, in ConnectHandler
     return ConnectionClass(*args, **kwargs)
