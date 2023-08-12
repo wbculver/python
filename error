@@ -1,1 +1,21 @@
-
+Error: Unable to retrieve IP route data from 10.95.255.64. first argument must be string or compiled pattern
+Traceback (most recent call last):
+  File "showiprouteafter.py", line 25, in get_ip_route_without_timestamps
+    output = net_connect.send_command("show ip route", expect_string=False)
+  File "/usr/local/lib/python3.8/dist-packages/netmiko/utilities.py", line 592, in wrapper_decorator
+    return func(self, *args, **kwargs)
+  File "/usr/local/lib/python3.8/dist-packages/netmiko/base_connection.py", line 1763, in send_command
+    if re.search(search_pattern, output):
+  File "/usr/lib/python3.8/re.py", line 201, in search
+    return _compile(pattern, flags).search(string)
+  File "/usr/lib/python3.8/re.py", line 303, in _compile
+    raise TypeError("first argument must be string or compiled pattern")
+TypeError: first argument must be string or compiled pattern
+An error occurred while processing 10.95.255.64. 'NoneType' object has no attribute 'split'
+Traceback (most recent call last):
+  File "showiprouteafter.py", line 76, in <module>
+    current_routes = ip_route_data[device_ip].split("\n")
+AttributeError: 'NoneType' object has no attribute 'split'
+Retrieving and comparing IP routes: 100%|██████████████████████████████████████████████████████████████████████████████████████████████| 10/10 [00:32<00:00,  3.28s/it]
+Writing comparison to Excel: 0it [00:00, ?it/s]
+Differences in IP routes comparison saved to EquinixRoutesComparisonOutput.xlsx
