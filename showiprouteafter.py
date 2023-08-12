@@ -76,28 +76,38 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
 
         # Original routes from the previous script output
         original_routes = previous_ip_route_data.get(sheet_name, [])
-        df_original = pd.DataFrame(original_routes, columns=["Original Routes"])
-        df_original.to_excel(writer, sheet_name=f"{sheet_name}_Original", index=False)
-
-        # New routes from the current "show ip route" output
-        new_routes = current_route_output.split("\n")
-        df_new = pd.DataFrame(new_routes, columns=["New Routes"])
-        df_new.to_excel(writer, sheet_name=f"{sheet_name}_New", index=False)
-
+        
         # Make both lists the same length by padding with blank lines
-        max_len = max(len(original_routes), len(new_routes))
+        max_len = max(len(original_routes), len(current_route_output.split("\n")))
         original_routes.extend([''] * (max_len - len(original_routes)))
-        new_routes.extend([''] * (max_len - len(new_routes)))
+        current_routes = current_route_output.split("\n")
+        current_routes.extend([''] * (max_len - len(current_routes)))
 
         # Compare routes and create a summary sheet
-        added_routes = [route for route in new_routes if route not in original_routes and route.strip()]
-        removed_routes = [route for route in original_routes if route not in new_routes and route.strip()]
-        unchanged_routes = [route for route in new_routes if route in original_routes and route.strip()]
-        df_comparison = pd.DataFrame({
-            "Added Routes": added_routes,
-            "Removed Routes": removed_routes,
-            "Unchanged Routes": unchanged_routes
-        })
+        comparison_data = {
+            "Original Routes": original_routes,
+            "New Routes": current_routes,
+            "Added Routes": [],
+            "Removed Routes": [],
+            "Unchanged Routes": [],
+        }
+
+        for original_route, current_route in zip(original_routes, current_routes):
+            original_route = original_route.strip()
+            current_route = current_route.strip()
+
+            if current_route:
+                if original_route:
+                    if current_route not in original_routes:
+                        comparison_data["Added Routes"].append(current_route)
+                    elif original_route not in current_routes:
+                        comparison_data["Removed Routes"].append(original_route)
+                    else:
+                        comparison_data["Unchanged Routes"].append(current_route)
+                else:
+                    comparison_data["Added Routes"].append(current_route)
+
+        df_comparison = pd.DataFrame(comparison_data)
         df_comparison.to_excel(writer, sheet_name=f"{sheet_name}_Comparison", index=False)
 
 # Print the path to the output file
