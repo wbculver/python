@@ -71,6 +71,10 @@ for ip in tqdm(device_ips, desc="Retrieving current IP routes"):
 output_file = "EquinixRoutesComparison.xlsx"
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
     for ip, current_route_output in current_ip_route_data.items():
+        # Exclude the device with IP "10.111.237.201"
+        if ip == "10.111.237.201":
+            continue
+
         sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
 
         # Original routes from the before script output
@@ -84,25 +88,19 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         # Compare routes and create a summary sheet
         added_routes = [route for route in new_routes if route not in original_routes]
         removed_routes = [route for route in original_routes if route not in new_routes]
-        unchanged_routes = [route for route in new_routes if route in original_routes]
 
         # Create DataFrames for the comparison
-        df_added_removed = pd.DataFrame({
+        df_comparison = pd.DataFrame({
             "Added Routes": added_routes,
             "Removed Routes": removed_routes,
         })
-        
-        # Filter out blank lines in the added and removed routes
-        df_added_removed = df_added_removed[df_added_removed["Added Routes"].str.strip() != ""]
-        df_added_removed = df_added_removed[df_added_removed["Removed Routes"].str.strip() != ""]
 
-        df_unchanged = pd.DataFrame({
-            "Unchanged Routes": unchanged_routes,
-        })
+        # Filter out blank lines in the added and removed routes
+        df_comparison = df_comparison[df_comparison["Added Routes"].str.strip() != ""]
+        df_comparison = df_comparison[df_comparison["Removed Routes"].str.strip() != ""]
 
         # Write the comparison data to the Excel sheet
-        df_added_removed.to_excel(writer, sheet_name=f"{sheet_name}_Added_Removed", index=False)
-        df_unchanged.to_excel(writer, sheet_name=f"{sheet_name}_Unchanged", index=False)
+        df_comparison.to_excel(writer, sheet_name=f"{sheet_name}_Added_Removed", index=False)
 
 # Print the path to the output file
 print(f"Route comparison data saved to {output_file}")
