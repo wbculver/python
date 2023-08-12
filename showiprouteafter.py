@@ -11,17 +11,16 @@ password = input("Enter your password: ")
 # List of device IP addresses to compare "show ip route" with the previous script output
 device_ips = [
     "10.111.237.200",
-    "10.111.237.201",
 ]
 
-# Load the previous script output
-previous_output_file = "EquinixRoutesAfterChange.xlsx"
-previous_ip_route_data = {}
+# Load the previous script output (before change)
+before_output_file = "EquinixRoutesBeforeChange.xlsx"
+before_ip_route_data = {}
 
-xls = pd.ExcelFile(previous_output_file)
-for sheet_name in xls.sheet_names:
-    df = pd.read_excel(xls, sheet_name=sheet_name)
-    previous_ip_route_data[sheet_name] = df["Route Data"].dropna().tolist()
+xls_before = pd.ExcelFile(before_output_file)
+for sheet_name in xls_before.sheet_names:
+    df = pd.read_excel(xls_before, sheet_name=sheet_name)
+    before_ip_route_data[sheet_name] = df["Route Data"].dropna().tolist()
 
 # Function to retrieve "show ip route" for a device and remove timestamps
 def get_ip_route_without_timestamps(device_ip):
@@ -68,38 +67,42 @@ current_ip_route_data = {}
 for ip in tqdm(device_ips, desc="Retrieving current IP routes"):
     current_ip_route_data[ip] = get_ip_route_without_timestamps(ip)
 
-# Create a new Excel file to store the original, new, and comparison data
+# Create a new Excel file to store the comparison data
 output_file = "EquinixRoutesComparison.xlsx"
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
     for ip, current_route_output in current_ip_route_data.items():
         sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
 
-        # Original routes from the previous script output
-        original_routes = previous_ip_route_data.get(sheet_name, [])
+        # Original routes from the before script output
+        original_routes = before_ip_route_data.get(sheet_name, [])
         new_routes = current_route_output.split("\n")
 
-        # Make both lists the same length by padding with blank lines
-        max_len = max(len(original_routes), len(new_routes))
-        original_routes += [''] * (max_len - len(original_routes))
-        new_routes += [''] * (max_len - len(new_routes))
+        # Filter out blank lines before performing the comparison
+        original_routes = [route for route in original_routes if route.strip()]
+        new_routes = [route for route in new_routes if route.strip()]
 
-        # Create a DataFrame for the comparison
-        df_comparison = pd.DataFrame({
-            "Original Routes": original_routes,
-            "New Routes": new_routes,
+        # Compare routes and create a summary sheet
+        added_routes = [route for route in new_routes if route not in original_routes]
+        removed_routes = [route for route in original_routes if route not in new_routes]
+        unchanged_routes = [route for route in new_routes if route in original_routes]
+
+        # Create DataFrames for the comparison
+        df_added_removed = pd.DataFrame({
+            "Added Routes": added_routes,
+            "Removed Routes": removed_routes,
+        })
+        
+        # Filter out blank lines in the added and removed routes
+        df_added_removed = df_added_removed[df_added_removed["Added Routes"].str.strip() != ""]
+        df_added_removed = df_added_removed[df_added_removed["Removed Routes"].str.strip() != ""]
+
+        df_unchanged = pd.DataFrame({
+            "Unchanged Routes": unchanged_routes,
         })
 
-        # Filter out rows with blank routes
-        df_comparison = df_comparison[df_comparison["Original Routes"].str.strip() != ""]
-        df_comparison = df_comparison[df_comparison["New Routes"].str.strip() != ""]
-
-        # Compare routes
-        df_comparison["Added Routes"] = df_comparison[~df_comparison["New Routes"].isin(df_comparison["Original Routes"])]["New Routes"]
-        df_comparison["Removed Routes"] = df_comparison[~df_comparison["Original Routes"].isin(df_comparison["New Routes"])]["Original Routes"]
-        df_comparison["Unchanged Routes"] = df_comparison[df_comparison["Original Routes"].isin(df_comparison["New Routes"])]["New Routes"]
-
         # Write the comparison data to the Excel sheet
-        df_comparison.to_excel(writer, sheet_name=f"{sheet_name}_Comparison", index=False)
+        df_added_removed.to_excel(writer, sheet_name=f"{sheet_name}_Added_Removed", index=False)
+        df_unchanged.to_excel(writer, sheet_name=f"{sheet_name}_Unchanged", index=False)
 
 # Print the path to the output file
 print(f"Route comparison data saved to {output_file}")
