@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
         # Write the "after" data to a sheet
         for device_ip, data in tqdm(differences.items(), desc="Writing 'after' data to Excel"):
-            after_df = pd.DataFrame([data["after"]], columns=["Route Data"])
+            after_df = pd.DataFrame(data["after"].split("\n"), columns=["Route Data"])
             after_df.to_excel(writer, sheet_name=f"After_{device_ip}", index=False)
 
         # Create a third sheet to show only the routes that are different
