@@ -1,10 +1,13 @@
 bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiprouteafter.py
-Loading Excel data: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00, 28.59it/s]
-Retrieving and comparing IP routes:   0%|                                                                                                        | 0/4 [00:02<?, ?it/s]
+Enter the username: brc8990s
+Enter the password for brc8990s:
+Loading Excel data: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:05<00:00,  1.34it/s]
+Retrieving and comparing IP routes:   0%|                                                                                                        | 0/8 [00:00<?, ?it/s]Error: Unable to retrieve IP route data from 10.145.32.20. No authentication methods available
+Retrieving and comparing IP routes:   0%|                                                                                                        | 0/8 [00:00<?, ?it/s]
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 59, in <module>
-    ip_route_data[ip] = get_ip_route_with_ssh(ip, username, password)
-NameError: name 'ip_route_data' is not defined
+  File "showiprouteafter.py", line 70, in <module>
+    route_entries_new = route_output.split("\n")
+AttributeError: 'NoneType' object has no attribute 'split'
 Error in sys.excepthook:
 Traceback (most recent call last):
   File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 72, in apport_excepthook
@@ -31,6 +34,6 @@ AttributeError: module 'lib' has no attribute 'X509_V_FLAG_CB_ISSUER_CHECK'
 
 Original exception was:
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 59, in <module>
-    ip_route_data[ip] = get_ip_route_with_ssh(ip, username, password)
-NameError: name 'ip_route_data' is not defined
+  File "showiprouteafter.py", line 70, in <module>
+    route_entries_new = route_output.split("\n")
+AttributeError: 'NoneType' object has no attribute 'split'
