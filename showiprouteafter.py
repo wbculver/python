@@ -52,38 +52,21 @@ def get_ip_route_without_timestamps(device_ip):
         return ""
 
 # Function to save IP route data to an Excel file
-def save_ip_route_to_excel(data, output_file, sheet_name="All Routes"):
+def save_ip_route_to_excel(data, output_file, sheet_name="{} Route".format(device_ip)):
     # Create a Pandas DataFrame
     df = pd.DataFrame({"Route Data": data})
-    # Create a Pandas Excel writer using XlsxWriter as the engine
+
+    # Save the DataFrame to the Excel file
     with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
-        # Write the DataFrame to a worksheet
         df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-# Retrieve "show ip route" without timestamps for each device (AFTER) with tqdm
-ip_route_data_after = {}
-for ip in tqdm(device_ips, desc="Retrieving routes"):
-    route_output_after = get_ip_route_without_timestamps(ip)
-    ip_route_data_after[ip] = route_output_after
+# Retrieve the output of "show ip route" for each device
+for ip in device_ips:
+    route_output = get_ip_route_without_timestamps(ip)
 
-# Save all routes in separate sheets within the same Excel file
-output_file = "EquinixRoutesComparison.xlsx"
-with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
-    for ip in device_ips:
-        # Save the initial routes in the first sheet
-        df_initial = pd.DataFrame({"Route Data": ip_route_data_after[ip].split("\n")})
-        df_initial.to_excel(writer, sheet_name="Initial - {}".format(ip), index=False)
+    # Save the output to the Excel file
+    with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
+        df = pd.DataFrame({"Route Data": route_output})
+        df.to_excel(writer, sheet_name="{} Route".format(ip), index=False)
 
-        # Compare the routes before and after
-        df_changes = pd.DataFrame(columns=["Change Type", "Before", "After"])
-
-        # Filter the initial data for the current device IP
-        initial_routes = df_initial["Route Data"].astype(str).tolist()
-
-        # Retrieve the route data after the change
-        route_after = ip_route_data_after.get(ip, "").split("\n")
-
-        # Find changes
-        for route_before, route_after in zip(initial_routes, route_after):
-            if route_before.strip() != route_after.strip():
-                df_changes
+print("Done!")
