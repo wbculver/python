@@ -57,6 +57,9 @@ for sheet_name in tqdm(pd.ExcelFile(input_file_before).sheet_names, desc="Loadin
     df = pd.read_excel(input_file_before, sheet_name=sheet_name)
     dfs_before.append(df)
 
+# Create a list to store the "after" IP route data (to be filled later)
+dfs_after = []
+
 # Create a dictionary to store the differences between the "before" and "after" IP route data
 differences = {}
 
@@ -81,6 +84,9 @@ for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
         diff_indices = [i for i, (r_before, r_after) in enumerate(zip(route_entries_before, route_entries_after)) if r_before != r_after]
         if diff_indices:
             differences[device_ip] = [(i, route_entries_before[i]) for i in diff_indices]
+
+        # Append the "after" data to the list
+        dfs_after.append(data_after)
 
     except Exception as e:
         print(f"An error occurred while processing {device_ip}. {str(e)}")
