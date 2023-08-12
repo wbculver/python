@@ -1,34 +1,26 @@
 import re
 import pandas as pd
-import xlsxwriter
 from tqdm import tqdm
-from netmiko import ConnectHandler
+from paramiko import SSHClient, AutoAddPolicy
 import traceback
 
 # Function to retrieve "show ip route" for a device and remove timestamps
 def get_ip_route_without_timestamps(device_ip, username, password):
     try:
-        # Cisco device information
-        device = {
-            "device_type": "cisco_ios",
-            "ip": device_ip,
-            "username": username,
-            "password": password,
-            "timeout": 120,  # Increase the timeout to 120 seconds (or more) if needed
-            "global_delay_factor": 2,  # Add a delay factor to allow more time for the command output
-        }
-
         # Establish SSH connection to the device
-        net_connect = ConnectHandler(**device)
+        ssh_client = SSHClient()
+        ssh_client.set_missing_host_key_policy(AutoAddPolicy())
+        ssh_client.connect(device_ip, username=username, password=password, timeout=120)
 
-        # Send the "show ip route" command
-        output = net_connect.send_command("show ip route", expect_string="[>#]")
+        # Execute the "show ip route" command
+        command = "show ip route"
+        stdin, stdout, stderr = ssh_client.exec_command(command)
 
-        # Send a blank line as a comment to the device (this will not affect the output)
-        net_connect.send_command("\n")
+        # Read the command output
+        output = stdout.read().decode("utf-8")
 
         # Close the SSH connection
-        net_connect.disconnect()
+        ssh_client.close()
 
         # Remove timestamps from the output
         output_without_timestamps = re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", output)
@@ -63,6 +55,3 @@ dfs_before = []
 for sheet_name in tqdm(pd.ExcelFile(input_file).sheet_names, desc="Loading Excel data (before)"):
     df = pd.read_excel(input_file, sheet_name=sheet_name)
     dfs_before.append(df)
-
-# ... (Rest of the code remains the same as in the previous response)
-
