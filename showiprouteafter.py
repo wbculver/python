@@ -56,6 +56,10 @@ def get_ip_route_without_timestamps(device_ip):
             for line in output.split("\n")
         ])
 
+        # Add a buffer of empty lines to ensure arrays have the same length
+        buffer_lines = "\n" * max(0, len(before_ip_route_data.get(device_ip, [])) - len(ip_route_output.split("\n")))
+        ip_route_output = buffer_lines + ip_route_output
+
         return ip_route_output
     finally:
         # Disconnect from the device
@@ -102,9 +106,6 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         # Filter out blank lines in the previous and changed routes
         df_comparison = df_comparison[df_comparison["Previous Routes"].str.strip() != ""]
         df_comparison = df_comparison[df_comparison["Changed Routes"].str.strip() != ""]
-
-        # Sort column C (Changed Routes) in alphabetical order
-        df_comparison.sort_values(by="Changed Routes", inplace=True)
 
         # Write the comparison data to the Excel sheet
         df_comparison.to_excel(writer, sheet_name=sheet_name, index=False)
