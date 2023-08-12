@@ -1,21 +1,16 @@
-bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiprouteafter.py
-Enter your username: 
-Enter your password: !
-Loading Excel data (before): 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 171.73it/s]
-Retrieving and comparing IP routes:   0%|                                                                                                        | 0/1 [00:00<?, ?it/s]An error occurred while processing 10.111.237.200. expected string or bytes-like object
+Retrieving current IP routes: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:06<00:00,  6.72s/it]
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 76, in <module>
-    route_entries_before = [re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", entry) for entry in df_before["Route Data"].tolist()]
-  File "showiprouteafter.py", line 76, in <listcomp>
-    route_entries_before = [re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", entry) for entry in df_before["Route Data"].tolist()]
-  File "/usr/lib/python3.8/re.py", line 210, in sub
-    return _compile(pattern, flags).sub(repl, string, count)
-TypeError: expected string or bytes-like object
-Retrieving and comparing IP routes: 100%|████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:02<00:00,  2.36s/it]
-Traceback (most recent call last):
-  File "showiprouteafter.py", line 97, in <module>
-    with pd.ExcelWriter(output_file, engine="xlsxwriter", mode="a") as writer:
-NameError: name 'output_file' is not defined
+  File "showiprouteafter.py", line 94, in <module>
+    df_comparison = pd.DataFrame({
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/frame.py", line 709, in __init__
+    mgr = dict_to_mgr(data, index, columns, dtype=dtype, copy=copy, typ=manager)
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/internals/construction.py", line 481, in dict_to_mgr
+    return arrays_to_mgr(arrays, columns, index, dtype=dtype, typ=typ, consolidate=copy)
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/internals/construction.py", line 115, in arrays_to_mgr
+    index = _extract_index(arrays)
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/internals/construction.py", line 655, in _extract_index
+    raise ValueError("All arrays must be of the same length")
+ValueError: All arrays must be of the same length
 Error in sys.excepthook:
 Traceback (most recent call last):
   File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 72, in apport_excepthook
@@ -42,6 +37,14 @@ AttributeError: module 'lib' has no attribute 'X509_V_FLAG_CB_ISSUER_CHECK'
 
 Original exception was:
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 97, in <module>
-    with pd.ExcelWriter(output_file, engine="xlsxwriter", mode="a") as writer:
-NameError: name 'output_file' is not defined
+  File "showiprouteafter.py", line 94, in <module>
+    df_comparison = pd.DataFrame({
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/frame.py", line 709, in __init__
+    mgr = dict_to_mgr(data, index, columns, dtype=dtype, copy=copy, typ=manager)
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/internals/construction.py", line 481, in dict_to_mgr
+    return arrays_to_mgr(arrays, columns, index, dtype=dtype, typ=typ, consolidate=copy)
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/internals/construction.py", line 115, in arrays_to_mgr
+    index = _extract_index(arrays)
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/internals/construction.py", line 655, in _extract_index
+    raise ValueError("All arrays must be of the same length")
+ValueError: All arrays must be of the same length
