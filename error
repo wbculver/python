@@ -1,4 +1,4 @@
-bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiproutebefore.py
+c@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiproutebefore.py
 [sudo] password for bc:
 Retrieving IP routes:   0%|                                                                                                                      | 0/1 [00:12<?, ?it/s]
 Traceback (most recent call last):
