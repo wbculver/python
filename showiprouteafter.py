@@ -56,46 +56,36 @@ def get_ip_route_without_timestamps(device_ip):
             for line in output.split("\n")
         ])
 
-        # Add a buffer of empty lines to ensure arrays have the same length
-        buffer_lines = "\n" * max(0, len(before_ip_route_data.get(device_ip, [])) - len(ip_route_output.split("\n")))
-        ip_route_output = buffer_lines + ip_route_output
-
         return ip_route_output
     finally:
         # Disconnect from the device
         net_connect.disconnect()
 
-# Create a dictionary to store the current "show ip route" output for each device
-current_ip_route_data = {}
-
-# Retrieve current "show ip route" without timestamps for each device
-for ip in tqdm(device_ips, desc="Retrieving current IP routes"):
-    current_ip_route_data[ip] = get_ip_route_without_timestamps(ip)
-
 # Create a new Excel file to store the comparison data
 output_file = "EquinixRoutesComparison.xlsx"
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-    for ip, current_route_output in current_ip_route_data.items():
+    for ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
         sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
+
+        # Retrieve the current "show ip route" output for the device
+        current_route_output = get_ip_route_without_timestamps(ip)
 
         # Original routes from the before script output
         original_routes = before_ip_route_data.get(sheet_name, [])
         new_routes = current_route_output.split("\n")
 
-        # Filter out blank lines before performing the comparison
-        original_routes = [route for route in original_routes if route.strip()]
-        new_routes = [route for route in new_routes if route.strip()]
+        # Add blank lines to match the length of the original routes
+        while len(new_routes) < len(original_routes):
+            new_routes.append("")
 
-        # Create DataFrames for the comparison
+        # Create a DataFrame for the comparison
         df_comparison = pd.DataFrame({
             "Previous Routes": new_routes,
             "Changed Routes": original_routes,
         })
 
-        # Identify the changed prefixes
-        changed_prefixes = df_comparison[df_comparison["Previous Routes"] != df_comparison["Changed Routes"]]["Previous Routes"].tolist()
-
         # Include the previous row above the changed route
+        changed_prefixes = df_comparison[df_comparison["Previous Routes"] != df_comparison["Changed Routes"]]["Previous Routes"].tolist()
         prev_row = None
         for idx, row in df_comparison.iterrows():
             if row["Previous Routes"] in changed_prefixes:
