@@ -74,36 +74,38 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         original_routes = before_ip_route_data.get(sheet_name, [])
         new_routes = current_route_output.split("\n")
 
-        # Add blank lines to match the length of the original routes
-        while len(new_routes) < len(original_routes):
-            new_routes.append("")
+        # Filter out blank lines before performing the comparison
+        original_routes = [route.strip() for route in original_routes if route.strip()]
+        new_routes = [route.strip() for route in new_routes if route.strip()]
+
+        # Create dictionaries for the comparison
+        original_dict = {route: True for route in original_routes}
+        new_dict = {route: True for route in new_routes}
+
+        # Identify the changed and removed prefixes
+        changed_routes = []
+        removed_routes = []
+        for route in original_dict:
+            if route not in new_dict:
+                removed_routes.append(route)
+            else:
+                del new_dict[route]
+
+        # Include the previous route above the changed route
+        for route in new_dict:
+            if route in removed_routes:
+                index = removed_routes.index(route)
+                if index > 0:
+                    changed_routes.append(removed_routes[index - 1])
 
         # Create a DataFrame for the comparison
         df_comparison = pd.DataFrame({
-            "Previous Routes": new_routes,
-            "Changed Routes": original_routes,
+            "Previous Routes": changed_routes,
+            "Changed Routes": removed_routes,
         })
-
-        # Include the previous row above the changed route
-        changed_prefixes = df_comparison[df_comparison["Previous Routes"] != df_comparison["Changed Routes"]]["Previous Routes"].tolist()
-        prev_row = None
-        for idx, row in df_comparison.iterrows():
-            if row["Previous Routes"] in changed_prefixes:
-                if prev_row:
-                    df_comparison.at[idx, "Diff Out"] = prev_row
-            prev_row = row["Previous Routes"]
-
-        # Filter out blank lines in the previous and changed routes
-        df_comparison = df_comparison[df_comparison["Previous Routes"].str.strip() != ""]
-        df_comparison = df_comparison[df_comparison["Changed Routes"].str.strip() != ""]
 
         # Write the comparison data to the Excel sheet
         df_comparison.to_excel(writer, sheet_name=sheet_name, index=False)
-
-        # Highlight rows in column C (Diff Out) in red
-        worksheet = writer.sheets[sheet_name]
-        red_font = writer.book.add_format({'font_color': 'red'})
-        worksheet.conditional_format(1, 2, df_comparison.shape[0], 2, {'type': 'text', 'criteria': 'containing', 'value': '*', 'format': red_font})
 
 # Print the path to the output file
 print(f"Route comparison data saved to {output_file}")
