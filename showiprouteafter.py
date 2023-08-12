@@ -3,6 +3,7 @@ import pandas as pd
 import xlsxwriter
 from tqdm import tqdm
 from netmiko import ConnectHandler
+import traceback
 
 # Function to retrieve "show ip route" for a device and remove timestamps
 def get_ip_route_without_timestamps(device_ip, username, password):
@@ -21,7 +22,6 @@ def get_ip_route_without_timestamps(device_ip, username, password):
         net_connect = ConnectHandler(**device)
 
         # Send the "show ip route" command
-        # Explicitly set the expected pattern to wait for
         output = net_connect.send_command("show ip route", expect_string=r"VA-EQX-HUM-A1-1-R1#")
 
         # Close the SSH connection
@@ -33,6 +33,7 @@ def get_ip_route_without_timestamps(device_ip, username, password):
         return output_without_timestamps
     except Exception as e:
         print(f"Error: Unable to retrieve IP route data from {device_ip}. {str(e)}")
+        traceback.print_exc()  # Print the full traceback for better error analysis
         return None
 
 # Load the Excel file with the saved IP route data
@@ -61,22 +62,26 @@ differences = {}
 # Retrieve the "show ip route" output for the devices and compare the data
 ip_route_data = {}  # Initialize the ip_route_data dictionary
 for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
-    ip_route_data[device_ip] = get_ip_route_without_timestamps(device_ip, username, password)
+    try:
+        ip_route_data[device_ip] = get_ip_route_without_timestamps(device_ip, username, password)
 
-    # Compare the IP route data for this device
-    df = dfs[device_ips.index(device_ip)]  # Get the corresponding DataFrame
-    route_entries = df["Route Data"].tolist()
-    route_output = ip_route_data[device_ip]
-    route_entries_new = route_output.split("\n")
+        # Compare the IP route data for this device
+        df = dfs[device_ips.index(device_ip)]  # Get the corresponding DataFrame
+        route_entries = df["Route Data"].tolist()
+        route_output = ip_route_data[device_ip]
+        route_entries_new = route_output.split("\n")
 
-    for index, route_entry in enumerate(route_entries):
-        if route_entry not in route_entries_new:
-            if device_ip not in differences:
-                differences[device_ip] = []
-            differences[device_ip].append({
-                "index": index,
-                "old_route": route_entry,
-            })
+        for index, route_entry in enumerate(route_entries):
+            if route_entry not in route_entries_new:
+                if device_ip not in differences:
+                    differences[device_ip] = []
+                differences[device_ip].append({
+                    "index": index,
+                    "old_route": route_entry,
+                })
+    except Exception as e:
+        print(f"An error occurred while processing {device_ip}. {str(e)}")
+        traceback.print_exc()  # Print the full traceback for better error analysis
 
 # Save the differences to an Excel file with separate sheets for original data and comparison results
 output_file = "EquinixRoutesComparisonOutput.xlsx"
