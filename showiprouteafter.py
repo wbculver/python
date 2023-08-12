@@ -2,6 +2,7 @@ import re
 import pandas as pd
 from netmiko import ConnectHandler
 import traceback
+from tqdm import tqdm
 
 # Function to retrieve "show ip route" for a device and remove timestamps
 def get_ip_route_without_timestamps(device_ip, username, password):
@@ -55,7 +56,7 @@ differences = {}
 
 # Retrieve the current "show ip route" output for the devices and compare the data
 ip_route_data = {}  # Initialize the ip_route_data dictionary
-for device_ip in device_ips:
+for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
     try:
         ip_route_data[device_ip] = get_ip_route_without_timestamps(device_ip, username, password)
 
@@ -63,7 +64,7 @@ for device_ip in device_ips:
         df_before = dfs_before[device_ip]  # Get the corresponding DataFrame (before change)
         route_entries_before = set(df_before["Route Data"].tolist())
         route_output = ip_route_data[device_ip]
-        route_entries_after = set(route_output.split("\n"))
+        route_entries_after = set(re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", route_output).split("\n"))
 
         # Find the differences between the two sets of route entries
         diff_entries = route_entries_before.symmetric_difference(route_entries_after)
@@ -84,8 +85,9 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
 
     # Write the current IP route data (after change) to separate sheets
     for device_ip, route_output in ip_route_data.items():
-        # Create a DataFrame without timestamps
-        df_after = pd.DataFrame({"Route Data": [re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", route_output)]})
+        # Create a DataFrame without timestamps and split output to separate lines
+        route_entries_after = re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", route_output).split("\n")
+        df_after = pd.DataFrame({"Route Data": route_entries_after})
         df_after.to_excel(writer, sheet_name=f"After_Device_{device_ip}", index=False)
 
     # Write the differences to a separate sheet for each device
