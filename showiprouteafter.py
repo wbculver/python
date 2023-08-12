@@ -82,14 +82,18 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         added_routes = [route for route in new_routes if route not in original_routes]
         removed_routes = [route for route in original_routes if route not in new_routes]
 
-        # Create a DataFrame for the comparison
-        df_comparison = pd.DataFrame({
+        # Create DataFrames for the comparison
+        df_added = pd.DataFrame({
             "Added Routes": added_routes,
+        })
+
+        df_removed = pd.DataFrame({
             "Removed Routes": removed_routes,
         })
 
-        # Write the comparison data to the Excel sheet
-        df_comparison.to_excel(writer, sheet_name=sheet_name, index=False)
+        # Write the comparison data to separate sheets for each device
+        df_added.to_excel(writer, sheet_name=f"{sheet_name}_Added", index=False)
+        df_removed.to_excel(writer, sheet_name=f"{sheet_name}_Removed", index=False)
 
 # Print the path to the output file
 print(f"Route comparison data saved to {output_file}")
