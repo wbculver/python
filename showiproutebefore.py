@@ -23,7 +23,6 @@ def get_ip_route_without_timestamps(device_ip):
         "username": username,
         "password": password,
         "timeout": 60,  # Increase the timeout if needed
-        "session_log": f"session_{device_ip}.log",  # Save session log for debugging
         "global_delay_factor": 2,  # Add a delay factor to allow more time for the command output
     }
 
@@ -53,7 +52,6 @@ ip_route_data = {}
 
 # Retrieve "show ip route" without timestamps for each device
 for ip in tqdm(device_ips, desc="Retrieving IP routes"):
-    # Add the device IP address as a key in the dictionary
     ip_route_data[ip] = get_ip_route_without_timestamps(ip)
 
 # Save the IP route data to an Excel file
