@@ -3,6 +3,7 @@ import pandas as pd
 import xlsxwriter
 from tqdm import tqdm
 import paramiko
+import getpass
 
 # Function to get IP route data from a device using SSH
 def get_ip_route_with_ssh(ip, username, password):
@@ -31,9 +32,13 @@ input_file = "EquinixRoutesBeforeChange.xlsx"
 
 # Define device information
 device_info = [
-    {"ip": "10.111.237.200", "username": "device1_username", "password": "device1_password"},
-    {"ip": "10.111.237.201", "username": "device2_username", "password": "device2_password"},
+    {"ip": "10.111.237.200", "username": "device1_username", "password": None},
+    {"ip": "10.111.237.201", "username": "device2_username", "password": None},
 ]
+
+# Prompt for the password for each device
+for device in device_info:
+    device["password"] = getpass.getpass(f"Enter password for {device['username']} on {device['ip']}: ")
 
 # Create a Pandas DataFrame for each worksheet in the Excel file
 dfs = []
