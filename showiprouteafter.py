@@ -52,13 +52,13 @@ def get_ip_route_without_timestamps(device_ip):
         return ""
 
 # Function to save IP route data to an Excel file
-def save_ip_route_to_excel(data, output_file):
+def save_ip_route_to_excel(data, output_file, sheet_name="All Routes"):
     # Create a Pandas DataFrame
     df = pd.DataFrame({"Route Data": data})
     # Create a Pandas Excel writer using XlsxWriter as the engine
     with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
         # Write the DataFrame to a worksheet
-        df.to_excel(writer, sheet_name="All Routes", index=False)
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 # Retrieve "show ip route" without timestamps for each device (AFTER) with tqdm
 ip_route_data_after = {}
@@ -72,7 +72,7 @@ with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
     for ip in device_ips:
         # Save the initial routes in the first sheet
         df_initial = pd.DataFrame({"Route Data": ip_route_data_after[ip].split("\n")})
-        df_initial.to_excel(writer, sheet_name=f"Initial - {ip}", index=False)
+        df_initial.to_excel(writer, sheet_name="Initial - {}".format(ip), index=False)
 
         # Compare the routes before and after
         df_changes = pd.DataFrame(columns=["Change Type", "Before", "After"])
@@ -86,9 +86,4 @@ with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
         # Find changes
         for route_before, route_after in zip(initial_routes, route_after):
             if route_before.strip() != route_after.strip():
-                df_changes = df_changes.append({"Change Type": "Route Data", "Before": route_before.strip(), "After": route_after.strip()}, ignore_index=True)
-
-        # Save changes to a separate sheet
-        df_changes.to_excel(writer, sheet_name=f"Changes - {ip}", index=False)
-
-print(f"Show IP Route data comparison saved to {output_file}")
+                df_changes = df_changes.append({"Change Type": "Route Data", "Before":
