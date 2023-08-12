@@ -86,15 +86,17 @@ if __name__ == "__main__":
             print(f"An error occurred while processing {device_ip}. {str(e)}")
             traceback.print_exc()  # Print the full traceback for better error analysis
 
-    # Save the differences to an Excel file with separate sheets for original data and comparison results
+    # Save the differences to an Excel file with separate sheets for original data, after data, and comparison results
     output_file = "EquinixRoutesComparisonOutput.xlsx"
     with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-        # Write the comparison results to separate sheets
-        for device_ip, data in tqdm(differences.items(), desc="Writing comparison to Excel"):
-            # Create a DataFrame with the proper structure for comparison
-            comparison_df = pd.DataFrame(data)
-            # Write the DataFrame to the Excel sheet
-            comparison_df.to_excel(writer, sheet_name=f"Comparison_{device_ip}", index=False)
+        # Write the original "before" data to a sheet
+        for device_ip, df in zip(device_ips, dfs_before):
+            df.to_excel(writer, sheet_name=f"Before_{device_ip}", index=False)
+
+        # Write the "after" data to a sheet
+        for device_ip, data in tqdm(differences.items(), desc="Writing 'after' data to Excel"):
+            after_df = pd.DataFrame([data["after"]], columns=["Route Data"])
+            after_df.to_excel(writer, sheet_name=f"After_{device_ip}", index=False)
 
         # Create a third sheet to show only the routes that are different
         diff_routes_df = pd.DataFrame()
