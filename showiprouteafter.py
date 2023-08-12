@@ -69,11 +69,14 @@ initial_file = "EquinixRoutesBeforeChange.xlsx"
 df_initial = pd.read_excel(initial_file, header=None)
 initial_routes = df_initial[0].tolist()
 
+# Split the initial routes into route entries
+initial_routes = [route.split('\n') for route in initial_routes]
+
 # Compare the routes before and after
 changes = {}
 for ip, route_before in zip(device_ips, initial_routes):
-    route_after = ip_route_data_after[ip]
-    changes[ip] = compare_routes(route_before.split("\n"), route_after.split("\n"))
+    route_after = ip_route_data_after[ip].split('\n')
+    changes[ip] = compare_routes(route_before, route_after)
 
 # Save the changes to "EquinixRoutesAfterChange.xlsx"
 output_file_after = "EquinixRoutesAfterChange.xlsx"
