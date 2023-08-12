@@ -1,10 +1,10 @@
 bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiprouteafter.py
+Loading Excel data: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00, 32.71it/s]
+Retrieving and comparing IP routes:   0%|                                                                                                        | 0/2 [00:02<?, ?it/s]
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 76, in <module>
-    equinixroutesbeforechange = f.read()
-  File "/usr/lib/python3.8/codecs.py", line 322, in decode
-    (result, consumed) = self._buffer_decode(data, self.errors, final)
-UnicodeDecodeError: 'utf-8' codec can't decode byte 0x8f in position 22: invalid start byte
+  File "showiprouteafter.py", line 58, in <module>
+    ip_route_data[ip] = get_ip_route_with_ssh(ip, username, password)
+NameError: name 'ip_route_data' is not defined
 Error in sys.excepthook:
 Traceback (most recent call last):
   File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 72, in apport_excepthook
@@ -31,8 +31,6 @@ AttributeError: module 'lib' has no attribute 'X509_V_FLAG_CB_ISSUER_CHECK'
 
 Original exception was:
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 76, in <module>
-    equinixroutesbeforechange = f.read()
-  File "/usr/lib/python3.8/codecs.py", line 322, in decode
-    (result, consumed) = self._buffer_decode(data, self.errors, final)
-UnicodeDecodeError: 'utf-8' codec can't decode byte 0x8f in position 22: invalid start byte
+  File "showiprouteafter.py", line 58, in <module>
+    ip_route_data[ip] = get_ip_route_with_ssh(ip, username, password)
+NameError: name 'ip_route_data' is not defined
