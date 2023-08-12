@@ -10,19 +10,20 @@ def get_ip_route_without_timestamps(device_ip, username, password):
     try:
         # Cisco device information
         device = {
-            "device_type": "cisco_ios",
+            "device_type": "cisco_ios",  # Update this to match the device type if needed
             "ip": device_ip,
             "username": username,
             "password": password,
-            "timeout": 120,  # Increase the timeout to 120 seconds (or more) if needed
-            "global_delay_factor": 2,  # Add a delay factor to allow more time for the command output
+            "timeout": 120,
+            "global_delay_factor": 2,
+            "use_keys": False,  # Disable using SSH keys
         }
 
         # Establish SSH connection to the device
         net_connect = ConnectHandler(**device)
 
         # Send the "show ip route" command without expecting a specific prompt
-        output = net_connect.send_command("show ip route", expect_string=False)
+        output = net_connect.send_command("show ip route", expect_string="EOF_MARKER_FOR_COMMAND_EXECUTION")
 
         # Close the SSH connection
         net_connect.disconnect()
@@ -33,7 +34,7 @@ def get_ip_route_without_timestamps(device_ip, username, password):
         return output_without_timestamps
     except Exception as e:
         print(f"Error: Unable to retrieve IP route data from {device_ip}. {str(e)}")
-        traceback.print_exc()  # Print the full traceback for better error analysis
+        traceback.print_exc()
         return None
 
 # Load the Excel file with the saved IP route data
@@ -85,7 +86,7 @@ for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
                         })
     except Exception as e:
         print(f"An error occurred while processing {device_ip}. {str(e)}")
-        traceback.print_exc()  # Print the full traceback for better error analysis
+        traceback.print_exc()
 
 # Save the differences to an Excel file with separate sheets for original data and comparison results
 output_file = "EquinixRoutesComparisonOutput.xlsx"
