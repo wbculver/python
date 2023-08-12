@@ -57,9 +57,6 @@ for sheet_name in tqdm(pd.ExcelFile(input_file_before).sheet_names, desc="Loadin
     df = pd.read_excel(input_file_before, sheet_name=sheet_name)
     dfs_before.append(df)
 
-# Create a list to store the "after" IP route data (to be filled later)
-dfs_after = []
-
 # Create a dictionary to store the differences between the "before" and "after" IP route data
 differences = {}
 
@@ -85,29 +82,24 @@ for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
         if diff_indices:
             differences[device_ip] = [(i, route_entries_before[i]) for i in diff_indices]
 
-        # Append the "after" data to the list
-        dfs_after.append(data_after)
+        # Create a DataFrame for "after" data
+        df_after = pd.DataFrame(route_entries_after, columns=["Route Data"])
+
+        # Save the "after" data to a separate sheet
+        output_file = "EquinixRoutesComparisonOutput.xlsx"
+        with pd.ExcelWriter(output_file, engine="xlsxwriter", mode="a") as writer:
+            sheet_name = f"Device_{device_ip}_After"
+            df_after.to_excel(writer, sheet_name=sheet_name, index=False)
 
     except Exception as e:
         print(f"An error occurred while processing {device_ip}. {str(e)}")
         traceback.print_exc()
 
-# Save the differences to an Excel file with separate sheets for "before," "after," and differences
-output_file = "EquinixRoutesComparisonOutput.xlsx"
-with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-    # Write the "before" IP route data to separate sheets
-    for device_ip, df_before in zip(device_ips, dfs_before):
-        df_before.to_excel(writer, sheet_name=f"Device_{device_ip}_Before", index=False)
-
-    # Write the "after" IP route data to separate sheets
-    for device_ip, data_after in zip(device_ips, dfs_after):
-        if data_after is not None:
-            df_after = pd.DataFrame(data_after.split("\n"), columns=["Route Data"])
-            df_after.to_excel(writer, sheet_name=f"Device_{device_ip}_After", index=False)
-
-    # Write the differences to a separate sheet
+# Save the differences to a separate sheet
+with pd.ExcelWriter(output_file, engine="xlsxwriter", mode="a") as writer:
     for device_ip, diff_list in tqdm(differences.items(), desc="Writing comparison to Excel"):
+        sheet_name = f"Differences_{device_ip}"
         diff_df = pd.DataFrame(diff_list, columns=["Index", "Route"])
-        diff_df.to_excel(writer, sheet_name=f"Differences_{device_ip}", index=False)
+        diff_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 print(f"Differences in IP routes comparison saved to {output_file}")
