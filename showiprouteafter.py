@@ -15,8 +15,9 @@ def get_ip_route_with_ssh(ip, username, password):
         # Execute the "show ip route" command
         stdin, stdout, stderr = ssh_client.exec_command("show ip route")
 
-        # Read the output
+        # Read the output and remove timestamps (HH:MM:SS)
         ip_route_data = stdout.read().decode()
+        ip_route_data = re.sub(r"\d{2}:\d{2}:\d{2}", "", ip_route_data)
 
         # Close the SSH connection
         ssh_client.close()
@@ -45,7 +46,6 @@ for sheet_name in tqdm(pd.ExcelFile(input_file).sheet_names, desc="Loading Excel
 differences = {}
 
 # Retrieve the "show ip route" output for the devices and compare the data
-ip_route_data = {}  # Define ip_route_data here
 for device in tqdm(device_info, desc="Retrieving and comparing IP routes"):
     ip = device["ip"]
     username = device["username"]
