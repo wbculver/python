@@ -2,6 +2,7 @@ from netmiko import ConnectHandler
 import re
 import pandas as pd
 import xlsxwriter
+from tqdm import tqdm  # Import tqdm for the progress bar
 
 # Variables
 username = "admin"
@@ -49,9 +50,9 @@ def save_ip_route_to_excel(data, output_file):
         # Write the DataFrame to a worksheet
         df.to_excel(writer, index=False)
 
-# Retrieve "show ip route" without timestamps for each device (AFTER)
+# Retrieve "show ip route" without timestamps for each device (AFTER) with tqdm
 ip_route_data_after = {}
-for ip in device_ips:
+for ip in tqdm(device_ips, desc="Retrieving routes"):
     route_output_after = get_ip_route_without_timestamps(ip)
     ip_route_data_after[ip] = route_output_after
 
@@ -59,9 +60,9 @@ for ip in device_ips:
 initial_file = "EquinixRoutesBeforeChange.xlsx"
 df_initial = pd.read_excel(initial_file, sheet_name=None)
 
-# Compare the routes before and after
+# Compare the routes before and after with tqdm
 changes = {}
-for ip in device_ips:
+for ip in tqdm(device_ips, desc="Comparing routes"):
     changes[ip] = []
 
     # Filter the initial data for the current device IP
@@ -75,19 +76,23 @@ for ip in device_ips:
         if route_before.strip() != route_after.strip():
             changes[ip].append(("Route Data", route_before.strip(), route_after.strip()))
 
-# Save the changes to "EquinixRoutesAfterChange.xlsx"
+# Save the changes to "EquinixRoutesAfterChange.xlsx" with tqdm
 output_file_after = "EquinixRoutesAfterChange.xlsx"
-with pd.ExcelWriter(output_file_after, engine='xlsxwriter') as writer:
-    for ip, change_data in changes.items():
-        if change_data:
-            # Create a DataFrame with the change information
-            df_changes = pd.DataFrame(change_data, columns=["Change Type", "Before", "After"])
-            # Write the DataFrame to a worksheet named after the IP address
-            df_changes.to_excel(writer, sheet_name=ip, index=False)
-            worksheet = writer.sheets[ip]
-            # Adjust the column widths
-            worksheet.set_column('A:A', 15)
-            worksheet.set_column('B:B', 60)
-            worksheet.set_column('C:C', 60)
+with tqdm(total=len(changes), desc="Saving changes") as pbar:
+    with pd.ExcelWriter(output_file_after, engine='xlsxwriter') as writer:
+        for ip, change_data in changes.items():
+            if change_data:
+                # Create a DataFrame with the change information
+                df_changes = pd.DataFrame(change_data, columns=["Change Type", "Before", "After"])
+                # Write the DataFrame to a worksheet named after the IP address
+                df_changes.to_excel(writer, sheet_name=ip, index=False)
+                worksheet = writer.sheets[ip]
+                # Adjust the column widths
+                worksheet.set_column('A:A', 15)
+                worksheet.set_column('B:B', 60)
+                worksheet.set_column('C:C', 60)
+
+            # Update the progress bar
+            pbar.update(1)
 
 print(f"Show IP Route data changes saved to {output_file_after}")
