@@ -82,40 +82,29 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         original_routes = [route for route in original_routes if route.strip()]
         new_routes = [route for route in new_routes if route.strip()]
 
-        # Compare routes and create a summary sheet
-        added_routes = [route for route in new_routes if route not in original_routes]
-        removed_routes = [route for route in original_routes if route not in new_routes]
-
-        # Include the previous row for each "*via" entry
-        prev_row = None
-        for route in new_routes:
-            if route.startswith("*via"):
-                if prev_row:
-                    added_routes.append(prev_row)
-                prev_row = route
-            else:
-                prev_row = route
-
         # Create DataFrames for the comparison
         df_comparison = pd.DataFrame({
-            "Added Routes": added_routes,
-            "Removed Routes": removed_routes,
+            "Added Routes": new_routes,
+            "Removed Routes": original_routes,
         })
+
+        # Identify the changed prefixes
+        changed_prefixes = df_comparison[df_comparison["Added Routes"] != df_comparison["Removed Routes"]]["Added Routes"].tolist()
+
+        # Include the previous row above the changed route
+        prev_row = None
+        for idx, row in df_comparison.iterrows():
+            if row["Added Routes"] in changed_prefixes:
+                if prev_row:
+                    df_comparison.at[idx, "Previous Row"] = prev_row
+            prev_row = row["Added Routes"]
 
         # Filter out blank lines in the added and removed routes
         df_comparison = df_comparison[df_comparison["Added Routes"].str.strip() != ""]
         df_comparison = df_comparison[df_comparison["Removed Routes"].str.strip() != ""]
 
         # Write the comparison data to the Excel sheet
-        df_comparison.to_excel(writer, sheet_name=f"{sheet_name}_Added_Removed", index=False)
-
-        # Original and new route data
-        df_original = pd.DataFrame(original_routes, columns=["Original Route"])
-        df_new = pd.DataFrame(new_routes, columns=["New Route"])
-
-        # Write the original and new route data to the Excel sheet
-        df_original.to_excel(writer, sheet_name=f"{sheet_name}_Original", index=False)
-        df_new.to_excel(writer, sheet_name=f"{sheet_name}_New", index=False)
+        df_comparison.to_excel(writer, sheet_name=sheet_name, index=False)
 
 # Print the path to the output file
 print(f"Route comparison data saved to {output_file}")
