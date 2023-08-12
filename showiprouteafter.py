@@ -1,8 +1,8 @@
-from netmiko import ConnectHandler
 import re
 import pandas as pd
 import xlsxwriter
-from tqdm import tqdm  # Import tqdm for the progress bar
+import paramiko
+from tqdm import tqdm
 
 # Variables
 username = "xx"
@@ -10,42 +10,46 @@ password = "xx"
 
 # List of device IP addresses to download "show ip route" from
 device_ips = [
- #   "10.145.32.20",
- #   "10.145.32.21",
- #   "10.128.1.4",
- #   "10.128.1.5",
- #   "10.145.64.20",
     "10.145.64.21",
- #   "10.128.2.153",
- #   "10.128.2.154",
 ]
 
 # Function to retrieve "show ip route" for a device and remove timestamps
 def get_ip_route_without_timestamps(device_ip):
-    # Cisco device information
-    device = {
-        "device_type": "cisco_ios",  # Use the appropriate device type for your ASR
-        "ip": device_ip,
-        "username": username,
-        "password": password,
-    }
+    # SSH connection parameters
+    ssh_client = paramiko.SSHClient()
+    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    # Connect to the device
-    net_connect = ConnectHandler(**device)
+    try:
+        # Connect to the device
+        ssh_client.connect(device_ip, username=username, password=password)
 
-    # Send the "show ip route" command and retrieve the output
-    output = net_connect.send_command("show ip route")
+        # Create an SSH shell channel
+        channel = ssh_client.invoke_shell()
 
-    # Disconnect from the device
-    net_connect.disconnect()
+        # Send the "show ip route" command
+        channel.send("show ip route\n")
 
-    # Define a regex pattern to match the timestamp format (e.g., 00:00:00 or 12:34:56)
-    pattern = re.compile(r'\d{2}:\d{2}:\d{2}')
+        # Wait for the command to complete and receive the output
+        output = ""
+        while not channel.recv_ready():
+            pass
+        while channel.recv_ready():
+            output += channel.recv(1024).decode()
 
-    # Remove timestamps from each line
-    ip_route_output = "\n".join([pattern.sub('', line) for line in output.split("\n")])
+        # Disconnect from the device
+        channel.close()
+        ssh_client.close()
 
-    return ip_route_output
+        # Define a regex pattern to match the timestamp format (e.g., 00:00:00 or 12:34:56)
+        pattern = re.compile(r'\d{2}:\d{2}:\d{2}')
+
+        # Remove timestamps from each line
+        ip_route_output = "\n".join([pattern.sub('', line) for line in output.split("\n")])
+
+        return ip_route_output
+    except Exception as e:
+        print(f"Error connecting to {device_ip}: {str(e)}")
+        return ""
 
 # Function to save IP route data to an Excel file
 def save_ip_route_to_excel(data, output_file):
