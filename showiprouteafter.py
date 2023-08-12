@@ -32,12 +32,13 @@ input_file = "EquinixRoutesBeforeChange.xlsx"
 
 # Define device information
 device_info = [
-    {"ip": "10.111.237.200", "username": "device1_username", "password": None},
-    {"ip": "10.111.237.201", "username": "device2_username", "password": None},
+    {"ip": "10.111.237.200", "username": None, "password": None},
+    {"ip": "10.111.237.201", "username": None, "password": None},
 ]
 
-# Prompt for the password for each device
+# Prompt for the username and password for each device
 for device in device_info:
+    device["username"] = input(f"Enter username for {device['ip']}: ")
     device["password"] = getpass.getpass(f"Enter password for {device['username']} on {device['ip']}: ")
 
 # Create a Pandas DataFrame for each worksheet in the Excel file
