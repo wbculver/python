@@ -1,7 +1,5 @@
 import re
 import pandas as pd
-import xlsxwriter
-from tqdm import tqdm
 from netmiko import ConnectHandler
 import traceback
 
@@ -49,24 +47,21 @@ device_ips = [
     # Add more devices as needed
 ]
 
-# Create a Pandas DataFrame for each worksheet in the Excel file
-dfs = []
-for sheet_name in tqdm(pd.ExcelFile(input_file).sheet_names, desc="Loading Excel data"):
-    df = pd.read_excel(input_file, sheet_name=sheet_name)
-    dfs.append(df)
+# Create a Pandas DataFrame for the "before" route data
+dfs_before = pd.read_excel(input_file, sheet_name=None)
 
 # Create a dictionary to store the differences between the "before" and current IP route data
 differences = {}
 
 # Retrieve the current "show ip route" output for the devices and compare the data
 ip_route_data = {}  # Initialize the ip_route_data dictionary
-for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
+for device_ip in device_ips:
     try:
         ip_route_data[device_ip] = get_ip_route_without_timestamps(device_ip, username, password)
 
         # Compare the IP route data for this device
-        df = dfs[device_ips.index(device_ip)]  # Get the corresponding DataFrame
-        route_entries_before = [re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", entry) for entry in df["Route Data"].tolist()]
+        df_before = dfs_before[device_ip]  # Get the corresponding DataFrame (before change)
+        route_entries_before = df_before["Route Data"].tolist()
         route_output = ip_route_data[device_ip]
         route_entries_after = route_output.split("\n")
 
@@ -82,15 +77,15 @@ for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
         print(f"An error occurred while processing {device_ip}. {str(e)}")
         traceback.print_exc()  # Print the full traceback for better error analysis
 
-# Save the differences to an Excel file with separate sheets for original data and comparison results
+# Save the differences to an Excel file with separate sheets for routes that are different
 output_file = "EquinixRoutesComparisonOutput.xlsx"
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
     # Write the original IP route data to separate sheets
-    for device_ip, df in zip(device_ips, dfs):
+    for device_ip, df in dfs_before.items():
         df.to_excel(writer, sheet_name=f"Device_{device_ip}", index=False)
 
     # Write the comparison results to a separate sheet for routes that are different
-    for device_ip, diff_list in tqdm(differences.items(), desc="Writing comparison to Excel"):
+    for device_ip, diff_list in differences.items():
         if diff_list:
             diff_df = pd.DataFrame(diff_list, columns=["Index", "Old Route"])
             diff_df.to_excel(writer, sheet_name=f"Differences_{device_ip}", index=False)
