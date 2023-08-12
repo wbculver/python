@@ -91,9 +91,20 @@ if __name__ == "__main__":
     with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         # Write the comparison results to separate sheets
         for device_ip, data in tqdm(differences.items(), desc="Writing comparison to Excel"):
-            # Create a DataFrame with a proper structure
-            comparison_df = pd.DataFrame([data])
+            # Create a DataFrame with the proper structure for comparison
+            comparison_df = pd.DataFrame(data)
             # Write the DataFrame to the Excel sheet
             comparison_df.to_excel(writer, sheet_name=f"Comparison_{device_ip}", index=False)
+
+        # Create a third sheet to show only the routes that are different
+        diff_routes_df = pd.DataFrame()
+        for device_ip, data in differences.items():
+            # Get the differences in route data
+            diff_routes = [route for route in data["before"].split("\n") if route not in data["after"]]
+            # Add the differences to the DataFrame
+            diff_routes_df[device_ip] = diff_routes
+
+        # Write the third sheet to the Excel file
+        diff_routes_df.to_excel(writer, sheet_name="Different_Routes", index=False)
 
     print(f"Differences in IP routes comparison saved to {output_file}")
