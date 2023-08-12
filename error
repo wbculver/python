@@ -1,11 +1,11 @@
 bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiprouteafter.py
 Enter the username: brc8990s
-Enter the password for brc8990s:
-Loading Excel data: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:05<00:00,  1.34it/s]
-Retrieving and comparing IP routes:   0%|                                                                                                        | 0/8 [00:00<?, ?it/s]Error: Unable to retrieve IP route data from 10.145.32.20. No authentication methods available
+Enter the password:
+Loading Excel data: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8/8 [00:06<00:00,  1.21it/s]
+Retrieving and comparing IP routes:   0%|                                                                                                        | 0/8 [00:00<?, ?it/s]Error: Unable to retrieve IP route data from 10.145.32.20. Authentication failed.
 Retrieving and comparing IP routes:   0%|                                                                                                        | 0/8 [00:00<?, ?it/s]
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 70, in <module>
+  File "showiprouteafter.py", line 74, in <module>
     route_entries_new = route_output.split("\n")
 AttributeError: 'NoneType' object has no attribute 'split'
 Error in sys.excepthook:
@@ -34,6 +34,6 @@ AttributeError: module 'lib' has no attribute 'X509_V_FLAG_CB_ISSUER_CHECK'
 
 Original exception was:
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 70, in <module>
+  File "showiprouteafter.py", line 74, in <module>
     route_entries_new = route_output.split("\n")
 AttributeError: 'NoneType' object has no attribute 'split'
