@@ -2,7 +2,7 @@ from netmiko import ConnectHandler
 import re
 import pandas as pd
 import xlsxwriter
-from tqdm import tqdm  # Import tqdm for the progress bar
+from tqdm import tqdm
 
 # Variables
 username = "admin"
@@ -29,25 +29,27 @@ def get_ip_route_without_timestamps(device_ip):
     # Connect to the device
     net_connect = ConnectHandler(**device)
 
-    # Set the socket timeout for the SSH connection
-    net_connect.remote_conn.sock.settimeout(120)  # Set the read timeout to 120 seconds
+    # Modify the SSH channel timeout
+    ssh_conn = net_connect.remote_conn.transport
+    ssh_conn.settimeout(120)  # Set the read timeout to 120 seconds
 
-    # Send the "terminal length 0" command
-    net_connect.send_command("terminal length 0", expect_string=r"#")
+    try:
+        # Send the "terminal length 0" command
+        net_connect.send_command("terminal length 0", expect_string=r"#")
 
-    # Send the "show ip route" command and retrieve the output
-    output = net_connect.send_command("show ip route", expect_string=r"#")
+        # Send the "show ip route" command and retrieve the output
+        output = net_connect.send_command("show ip route", expect_string=r"#")
 
-    # Disconnect from the device
-    net_connect.disconnect()
+        # Define a regex pattern to match the timestamp format (e.g., 00:00:00 or 12:34:56)
+        pattern = re.compile(r'\d{2}:\d{2}:\d{2}')
 
-    # Define a regex pattern to match the timestamp format (e.g., 00:00:00 or 12:34:56)
-    pattern = re.compile(r'\d{2}:\d{2}:\d{2}')
+        # Remove timestamps from each line
+        ip_route_output = "\n".join([pattern.sub('', line) for line in output.split("\n")])
 
-    # Remove timestamps from each line
-    ip_route_output = "\n".join([pattern.sub('', line) for line in output.split("\n")])
-
-    return ip_route_output
+        return ip_route_output
+    finally:
+        # Disconnect from the device
+        net_connect.disconnect()
 
 # Create a dictionary to store the "show ip route" output for each device
 ip_route_data = {}
