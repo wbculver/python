@@ -78,7 +78,7 @@ for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
         df_before = dfs_before[device_ips.index(device_ip)]
 
         # Convert "before" DataFrame to a list of route entries
-        route_entries_before = df_before["Route Data"].tolist()
+        route_entries_before = [re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", entry) for entry in df_before["Route Data"].tolist()]
 
         # Find the differences
         diff_indices = [i for i, (r_before, r_after) in enumerate(zip(route_entries_before, route_entries_after)) if r_before != r_after]
