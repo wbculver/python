@@ -1,8 +1,8 @@
 bc@WKGK1QFG3:/mnt/c/Users/BRC8990/OneDrive - Humana/Desktop/python-main/python-main$ sudo python3 showiprouteafter.py
-Loading Excel data: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00, 32.71it/s]
-Retrieving and comparing IP routes:   0%|                                                                                                        | 0/2 [00:02<?, ?it/s]
+Loading Excel data: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00, 28.59it/s]
+Retrieving and comparing IP routes:   0%|                                                                                                        | 0/4 [00:02<?, ?it/s]
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 58, in <module>
+  File "showiprouteafter.py", line 59, in <module>
     ip_route_data[ip] = get_ip_route_with_ssh(ip, username, password)
 NameError: name 'ip_route_data' is not defined
 Error in sys.excepthook:
@@ -31,6 +31,6 @@ AttributeError: module 'lib' has no attribute 'X509_V_FLAG_CB_ISSUER_CHECK'
 
 Original exception was:
 Traceback (most recent call last):
-  File "showiprouteafter.py", line 58, in <module>
+  File "showiprouteafter.py", line 59, in <module>
     ip_route_data[ip] = get_ip_route_with_ssh(ip, username, password)
 NameError: name 'ip_route_data' is not defined
