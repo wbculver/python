@@ -65,7 +65,7 @@ for ip in device_ips:
     changes[ip] = []
 
     # Filter the initial data for the current device IP
-    initial_routes = df_initial[ip]["Route Data"].tolist()
+    initial_routes = df_initial[ip]["Route Data"].astype(str).tolist()
 
     # Retrieve the route data after the change
     route_after = ip_route_data_after.get(ip, "").split("\n")
