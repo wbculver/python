@@ -2,6 +2,7 @@ from netmiko import ConnectHandler
 import re
 import pandas as pd
 import xlsxwriter
+from tqdm import tqdm  # Import tqdm for the progress bar
 
 # Variables
 username = "admin"
@@ -44,7 +45,7 @@ def get_ip_route_without_timestamps(device_ip):
 ip_route_data = {}
 
 # Retrieve "show ip route" without timestamps for each device
-for ip in device_ips:
+for ip in tqdm(device_ips, desc="Retrieving IP routes"):
     # Add the device IP address as a key in the dictionary
     ip_route_data[ip] = get_ip_route_without_timestamps(ip)
 
@@ -64,7 +65,7 @@ for ip, route_output in ip_route_data.items():
 
 # Create a Pandas Excel writer
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-    for df, sheet_name in dfs:
+    for df, sheet_name in tqdm(dfs, desc="Writing to Excel"):
         # Write each DataFrame to a separate worksheet with the modified sheet name
         df.to_excel(writer, sheet_name=sheet_name, index=False)
         worksheet = writer.sheets[sheet_name]
