@@ -66,12 +66,12 @@ for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
 
         # Compare the IP route data for this device
         df = dfs[device_ips.index(device_ip)]  # Get the corresponding DataFrame
-        route_entries = df["Route Data"].tolist()
+        route_entries_before = [re.sub(r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2}\s", "", entry) for entry in df["Route Data"].tolist()]
         route_output = ip_route_data[device_ip]
-        route_entries_new = route_output.split("\n")
+        route_entries_after = route_output.split("\n")
 
-        for index, route_entry in enumerate(route_entries):
-            if route_entry not in route_entries_new:
+        for index, route_entry in enumerate(route_entries_before):
+            if route_entry not in route_entries_after:
                 if device_ip not in differences:
                     differences[device_ip] = []
                 differences[device_ip].append({
@@ -89,9 +89,10 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
     for device_ip, df in zip(device_ips, dfs):
         df.to_excel(writer, sheet_name=f"Device_{device_ip}", index=False)
 
-    # Write the comparison results to a separate sheet
+    # Write the comparison results to a separate sheet for routes that are different
     for device_ip, diff_list in tqdm(differences.items(), desc="Writing comparison to Excel"):
-        diff_df = pd.DataFrame(diff_list, columns=["Index", "Old Route"])
-        diff_df.to_excel(writer, sheet_name=f"Differences_{device_ip}", index=False)
+        if diff_list:
+            diff_df = pd.DataFrame(diff_list, columns=["Index", "Old Route"])
+            diff_df.to_excel(writer, sheet_name=f"Differences_{device_ip}", index=False)
 
 print(f"Differences in IP routes comparison saved to {output_file}")
