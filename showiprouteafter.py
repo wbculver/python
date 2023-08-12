@@ -21,8 +21,8 @@ def get_ip_route_without_timestamps(device_ip, username, password):
         # Establish SSH connection to the device
         net_connect = ConnectHandler(**device)
 
-        # Send the "show ip route" command
-        output = net_connect.send_command("show ip route")
+        # Send the "show ip route" command without expecting a specific prompt
+        output = net_connect.send_command("show ip route", expect_string=False)
 
         # Close the SSH connection
         net_connect.disconnect()
