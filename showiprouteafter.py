@@ -21,7 +21,7 @@ previous_ip_route_data = {}
 xls = pd.ExcelFile(previous_output_file)
 for sheet_name in xls.sheet_names:
     df = pd.read_excel(xls, sheet_name=sheet_name)
-    previous_ip_route_data[sheet_name] = df["Route Data"].tolist()
+    previous_ip_route_data[sheet_name] = df["Route Data"].dropna().tolist()
 
 # Function to retrieve "show ip route" for a device and remove timestamps
 def get_ip_route_without_timestamps(device_ip):
@@ -84,10 +84,15 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         df_new = pd.DataFrame(new_routes, columns=["New Routes"])
         df_new.to_excel(writer, sheet_name=f"{sheet_name}_New", index=False)
 
+        # Make both lists the same length by padding with blank lines
+        max_len = max(len(original_routes), len(new_routes))
+        original_routes.extend([''] * (max_len - len(original_routes)))
+        new_routes.extend([''] * (max_len - len(new_routes)))
+
         # Compare routes and create a summary sheet
-        added_routes = [route for route in new_routes if route not in original_routes]
-        removed_routes = [route for route in original_routes if route not in new_routes]
-        unchanged_routes = [route for route in new_routes if route in original_routes]
+        added_routes = [route for route in new_routes if route not in original_routes and route.strip()]
+        removed_routes = [route for route in original_routes if route not in new_routes and route.strip()]
+        unchanged_routes = [route for route in new_routes if route in original_routes and route.strip()]
         df_comparison = pd.DataFrame({
             "Added Routes": added_routes,
             "Removed Routes": removed_routes,
