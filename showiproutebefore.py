@@ -18,17 +18,19 @@ device_ips = [
 def get_ip_route_without_timestamps(device_ip):
     # Cisco device information
     device = {
-        "device_type": "cisco_ios",  # Use the appropriate device type for your ASR
+        "device_type": "cisco_ios",
         "ip": device_ip,
         "username": username,
         "password": password,
+        "timeout": 30,  # Increase the timeout if needed
+        "session_log": "session.log",  # Save session log for debugging
     }
 
     # Connect to the device
     net_connect = ConnectHandler(**device)
 
     # Send the "show ip route" command and retrieve the output
-    output = net_connect.send_command("show ip route")
+    output = net_connect.send_command("show ip route", expect_string=r"#")
 
     # Disconnect from the device
     net_connect.disconnect()
