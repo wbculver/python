@@ -1,8 +1,8 @@
 from netmiko import ConnectHandler
 import re
 import pandas as pd
-import xlsxwriter
 from tqdm import tqdm
+from openpyxl import Workbook
 
 # Variables
 username = input("Enter your username: ")
@@ -63,36 +63,33 @@ def get_ip_route_without_timestamps(device_ip):
 
 # Create a new Excel file to store the comparison data
 output_file = "EquinixRoutesComparison.xlsx"
-with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-    for ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
-        sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
+wb = Workbook()
+for ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
+    sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
+    ws = wb.create_sheet(sheet_name)
 
-        # Retrieve the current "show ip route" output for the device
-        current_route_output = get_ip_route_without_timestamps(ip)
+    # Retrieve the current "show ip route" output for the device
+    current_route_output = get_ip_route_without_timestamps(ip)
 
-        # Original routes from the before script output
-        original_routes = before_ip_route_data.get(sheet_name, [])
-        new_routes = current_route_output.split("\n")
+    # Original routes from the before script output
+    original_routes = before_ip_route_data.get(sheet_name, [])
+    new_routes = current_route_output.split("\n")
 
-        # Filter out blank lines and routes enclosed in square brackets []
-        original_routes = [route.strip() for route in original_routes if route.strip() and not re.match(r'^\[.*\]$', route.strip())]
-        new_routes = [route.strip() for route in new_routes if route.strip() and not re.match(r'^\[.*\]$', route.strip())]
+    # Filter out blank lines and routes enclosed in square brackets []
+    original_routes = [route.strip() for route in original_routes if route.strip() and not re.match(r'^\[.*\]$', route.strip())]
+    new_routes = [route.strip() for route in new_routes if route.strip() and not re.match(r'^\[.*\]$', route.strip())]
 
-        # Identify changed routes
-        changed_routes = [route for route in new_routes if route not in original_routes]
+    # Identify changed routes
+    changed_routes = [route for route in new_routes if route not in original_routes]
 
-        # Create a DataFrame for the changed routes with previous route
-        df_changed_routes = pd.DataFrame({
-            "Changed Routes": changed_routes,
-        })
+    # Write the changed routes to the Excel sheet
+    ws.append(["Changed Routes", "Previous Routes"])
+    for route in changed_routes:
+        previous_route = next((original for original in original_routes if original.startswith(route.split()[0])), None)
+        ws.append([route, previous_route])
 
-        # Add a column for the previous route
-        df_changed_routes["Previous Routes"] = df_changed_routes["Changed Routes"].apply(
-            lambda route: [original for original in original_routes if original.startswith(route.split()[0])]
-        )
-
-        # Write the changed routes with previous route to the Excel sheet
-        df_changed_routes.to_excel(writer, sheet_name=sheet_name, index=False)
+# Save the Excel file
+wb.save(output_file)
 
 # Print the path to the output file
 print(f"Route comparison data (changed routes with previous routes) saved to {output_file}")
