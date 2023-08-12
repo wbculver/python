@@ -51,6 +51,15 @@ def get_ip_route_without_timestamps(device_ip):
         print(f"Error connecting to {device_ip}: {str(e)}")
         return ""
 
+# Function to save IP route data to an Excel file
+def save_ip_route_to_excel(data, output_file):
+    # Create a Pandas DataFrame
+    df = pd.DataFrame({"Route Data": data})
+    # Create a Pandas Excel writer using XlsxWriter as the engine
+    with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
+        # Write the DataFrame to a worksheet
+        df.to_excel(writer, sheet_name="All Routes", index=False)
+
 # Retrieve "show ip route" without timestamps for each device (AFTER) with tqdm
 ip_route_data_after = {}
 for ip in tqdm(device_ips, desc="Retrieving routes"):
@@ -60,13 +69,12 @@ for ip in tqdm(device_ips, desc="Retrieving routes"):
 # Save all routes in separate sheets within the same Excel file
 output_file = "EquinixRoutesComparison.xlsx"
 with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
-    # Save the initial routes in the first sheet
     for ip in device_ips:
+        # Save the initial routes in the first sheet
         df_initial = pd.DataFrame({"Route Data": ip_route_data_after[ip].split("\n")})
         df_initial.to_excel(writer, sheet_name=f"Initial - {ip}", index=False)
 
-    # Compare the routes before and after
-    for ip in tqdm(device_ips, desc="Comparing routes"):
+        # Compare the routes before and after
         df_changes = pd.DataFrame(columns=["Change Type", "Before", "After"])
 
         # Filter the initial data for the current device IP
@@ -83,4 +91,4 @@ with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
         # Save changes to a separate sheet
         df_changes.to_excel(writer, sheet_name=f"Changes - {ip}", index=False)
 
-print(f"Show IP Route data comparison saved
+print(f"Show IP Route data comparison saved to {output_file}")
