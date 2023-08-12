@@ -5,13 +5,19 @@ import xlsxwriter
 from tqdm import tqdm  # Import tqdm for the progress bar
 
 # Variables
-username = "admin"
-password = "Eve1234!"
+username = "xx"
+password = "xx"
 
 # List of device IP addresses to download "show ip route" from
 device_ips = [
-    "10.111.237.200",
-    "10.111.237.201",
+ #   "10.145.32.20",
+ #   "10.145.32.21",
+ #   "10.128.1.4",
+ #   "10.128.1.5",
+ #   "10.145.64.20",
+    "10.145.64.21",
+ #   "10.128.2.153",
+ #   "10.128.2.154",
 ]
 
 # Function to retrieve "show ip route" for a device and remove timestamps
