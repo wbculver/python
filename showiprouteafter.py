@@ -61,6 +61,13 @@ def get_ip_route_without_timestamps(device_ip):
         # Disconnect from the device
         net_connect.disconnect()
 
+# Create a dictionary to store the current "show ip route" output for each device
+current_ip_route_data = {}
+
+# Retrieve current "show ip route" without timestamps for each device
+for ip in tqdm(device_ips, desc="Retrieving current IP routes"):
+    current_ip_route_data[ip] = get_ip_route_without_timestamps(ip)
+
 # Create a new Excel file to store the original, new, and comparison data
 output_file = "EquinixRoutesComparison.xlsx"
 with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
