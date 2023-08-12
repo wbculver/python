@@ -67,6 +67,7 @@ for device_ip in tqdm(device_ips, desc="Retrieving and comparing IP routes"):
 
         # Compare the IP route data for this device
         df_before = dfs_before[device_ips.index(device_ip)]  # Get the corresponding DataFrame (before change)
+        pattern = r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2} \w{3}:\w{3}:\w{3}:\w{3}"
         route_entries_before = [re.sub(pattern, "", entry) for entry in df_before["Route Data"].tolist()]
         route_output = ip_route_data[device_ip]
         route_entries_after = route_output.split("\n")
