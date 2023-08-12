@@ -45,6 +45,7 @@ for sheet_name in tqdm(pd.ExcelFile(input_file).sheet_names, desc="Loading Excel
 differences = {}
 
 # Retrieve the "show ip route" output for the devices and compare the data
+ip_route_data = {}  # Define ip_route_data here
 for device in tqdm(device_info, desc="Retrieving and comparing IP routes"):
     ip = device["ip"]
     username = device["username"]
