@@ -36,15 +36,14 @@ def get_ip_route_without_timestamps(device_ip):
 
     return ip_route_output
 
-# Retrieve updated "show ip route" data for each device
-ip_route_data_after = {}
-for ip in device_ips:
-    route_output_after = get_ip_route_without_timestamps(ip)
-    ip_route_data_after[ip] = route_output_after
-
-# Load the initial route data from the previously created "before" Excel file
-initial_file = "EquinixRoutesBeforeChange.xlsx"
-df_initial = pd.read_excel(initial_file, header=None)
+# Function to save IP route data to an Excel file
+def save_ip_route_to_excel(data, output_file):
+    # Create a Pandas DataFrame
+    df = pd.DataFrame({"Route Data": data})
+    # Create a Pandas Excel writer using XlsxWriter as the engine
+    with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
+        # Write the DataFrame to a worksheet
+        df.to_excel(writer, index=False)
 
 # Function to compare two sets of route data
 def compare_routes(old_routes, new_routes):
@@ -53,6 +52,16 @@ def compare_routes(old_routes, new_routes):
         if old_line != new_line:
             changes.append((line_num, old_line, new_line))
     return changes
+
+# Retrieve updated "show ip route" data for each device
+ip_route_data_after = {}
+for ip in device_ips:
+    route_output_after = get_ip_route_without_timestamps(ip)
+    ip_route_data_after[ip] = route_output_after
+
+# Load the initial route data from the previously created "before" Excel file
+initial_file = "EquinixRoutesBeforeChange.xlsx"
+df_initial = pd.read_excel(initial_file, header=None, dtype={0: str})
 
 # Compare the routes before and after
 changes = {}
