@@ -2,36 +2,41 @@ import re
 import pandas as pd
 import xlsxwriter
 from tqdm import tqdm
-from netmiko import SSHClient, AutoAddPolicy
 import traceback
+import netmiko
 
-# Function to retrieve "show ip route" for a device and remove timestamps
 def get_ip_route_without_timestamps(device_ip, username, password):
-    try:
-        # Establish SSH connection to the device
-        ssh_client = SSHClient()
-        ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-        ssh_client.connect(device_ip, username=username, password=password, timeout=120)
+    """Retrieves the IP route data from a network device without timestamps.
 
-        # Execute the "show ip route" command
-        command = "show ip route"
-        stdin, stdout, stderr = ssh_client.exec_command(command)
+    Args:
+        device_ip (str): The IP address of the network device.
+        username (str): The username to use to connect to the network device.
+        password (str): The password to use to connect to the network device.
 
-        # Read the command output
-        output = stdout.read().decode("utf-8")
+    Returns:
+        str: The IP route data without timestamps.
+    """
 
-        # Close the SSH connection
-        ssh_client.close()
+    # Create a ConnectHandler object
+    net_connect = netmiko.ConnectHandler(
+        ip=device_ip,
+        username=username,
+        password=password,
+        device_type="cisco_ios"
+    )
 
-        # Remove timestamps from the output
-        pattern = r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2} \w{3}:\w{3}:\w{3}:\w{3}"
-        output_without_timestamps = re.sub(pattern, "", output)
+    # Execute the "show ip route" command
+    command = "show ip route"
+    output = net_connect.send_command(command)
 
-        return output_without_timestamps
-    except Exception as e:
-        print(f"Error: Unable to retrieve IP route data from {device_ip}. {str(e)}")
-        traceback.print_exc()  # Print the full traceback for better error analysis
-        return None
+    # Close the SSH connection
+    net_connect.disconnect()
+
+    # Remove timestamps from the output
+    pattern = r"\d{1,2}:\d{1,2}:\d{1,2}\.\d{1,2} \w{3}:\w{3}:\w{3}:\w{3}"
+    output_without_timestamps = re.sub(pattern, "", output)
+
+    return output_without_timestamps
 
 # Load the Excel files with the saved IP route data
 input_file_before = "EquinixRoutesBeforeChange.xlsx"
