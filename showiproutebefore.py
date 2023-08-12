@@ -23,12 +23,14 @@ def get_ip_route_without_timestamps(device_ip):
         "username": username,
         "password": password,
         "timeout": 60,  # Increase the timeout if needed
-        "read_timeout": 120,  # Increase the read timeout
         "session_log": f"session_{device_ip}.log",  # Save session log for debugging
     }
 
     # Connect to the device
     net_connect = ConnectHandler(**device)
+
+    # Set the socket timeout for the SSH connection
+    net_connect.remote_conn.sock.settimeout(120)  # Set the read timeout to 120 seconds
 
     # Send the "terminal length 0" command
     net_connect.send_command("terminal length 0", expect_string=r"#")
