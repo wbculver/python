@@ -22,7 +22,7 @@ def get_ip_route_without_timestamps(device_ip, username, password):
         net_connect = ConnectHandler(**device)
 
         # Send the "show ip route" command
-        output = net_connect.send_command("show ip route", expect_string=r"VA-EQX-HUM-A1-1-R1#")
+        output = net_connect.send_command("show ip route", expect_string=r"None")
 
         # Close the SSH connection
         net_connect.disconnect()
@@ -45,9 +45,14 @@ password = input("Enter your password: ")
 
 # Define device IP addresses to download "show ip route" from
 device_ips = [
-    "10.111.237.200",
-    "10.111.237.201",
-    # Add more device IPs as needed
+    "10.145.32.20",
+    "10.145.32.21",
+    "10.128.1.4",
+    "10.128.1.5",
+    "10.145.64.20",
+    "10.145.64.21",
+    "10.128.2.153",
+    "10.128.2.154",
 ]
 
 # Create a Pandas DataFrame for each worksheet in the Excel file
