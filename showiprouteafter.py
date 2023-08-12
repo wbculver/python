@@ -74,26 +74,20 @@ with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
         original_routes = before_ip_route_data.get(sheet_name, [])
         new_routes = current_route_output.split("\n")
 
-        # Filter out blank lines before performing the comparison
-        original_routes = [route.strip() for route in original_routes if route.strip()]
-        new_routes = [route.strip() for route in new_routes if route.strip()]
+        # Filter out blank lines and routes enclosed in square brackets []
+        original_routes = [route.strip() for route in original_routes if route.strip() and not re.match(r'^\[.*\]$', route.strip())]
+        new_routes = [route.strip() for route in new_routes if route.strip() and not re.match(r'^\[.*\]$', route.strip())]
 
-        # Identify added and removed routes
-        added_routes = [route for route in new_routes if route not in original_routes]
-        removed_routes = [route for route in original_routes if route not in new_routes]
+        # Identify changed routes
+        changed_routes = [route for route in new_routes if route not in original_routes]
 
-        # Create DataFrames for the comparison
-        df_added = pd.DataFrame({
-            "Added Routes": added_routes,
+        # Create a DataFrame for the changed routes
+        df_changed_routes = pd.DataFrame({
+            "Changed Routes": changed_routes,
         })
 
-        df_removed = pd.DataFrame({
-            "Removed Routes": removed_routes,
-        })
-
-        # Write the comparison data to separate sheets for each device
-        df_added.to_excel(writer, sheet_name=f"{sheet_name}_Added", index=False)
-        df_removed.to_excel(writer, sheet_name=f"{sheet_name}_Removed", index=False)
+        # Write the changed routes to the Excel sheet
+        df_changed_routes.to_excel(writer, sheet_name=sheet_name, index=False)
 
 # Print the path to the output file
-print(f"Route comparison data saved to {output_file}")
+print(f"Route comparison data (changed routes) saved to {output_file}")
