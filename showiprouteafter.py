@@ -1,79 +1,48 @@
 import re
 import pandas as pd
 import xlsxwriter
-import paramiko
 from tqdm import tqdm
 
-# Variables
-username = "xx"
-password = "xx"
+# Load the Excel file with the saved IP route data
+input_file = "EquinixRoutesBeforeChange.xlsx"
 
-# List of device IP addresses to download "show ip route" from
-device_ips = [
-    "10.145.64.21",
-]
+# Create a Pandas DataFrame for each worksheet in the Excel file
+dfs = []
+for sheet_name in tqdm(pd.ExcelFile(input_file).sheet_names, desc="Loading Excel data"):
+    df = pd.read_excel(input_file, sheet_name=sheet_name)
+    dfs.append(df)
 
-# Function to retrieve "show ip route" for a device and remove timestamps
-def get_ip_route_without_timestamps(device_ip):
-    # SSH connection parameters
-    ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+# Retrieve the "show ip route" output for the devices
+device_ips = ["10.111.237.200", "10.111.237.201"]
+ip_route_data = {}
+for ip in tqdm(device_ips, desc="Retrieving IP routes"):
+    ip_route_data[ip] = get_ip_route_without_timestamps(ip)
 
-    try:
-        # Connect to the device
-        ssh_client.connect(device_ip, username=username, password=password)
+# Create a dictionary to store the differences between the two sets of IP route data
+differences = {}
 
-        # Create an SSH shell channel
-        channel = ssh_client.invoke_shell()
+# Compare the IP route data for each device
+for ip, df in tqdm(zip(device_ips, dfs), desc="Comparing IP routes"):
+    # Create a list of the route entries in the Excel file
+    route_entries = df["Route Data"].tolist()
 
-        # Send the "show ip route" command
-        channel.send("show ip route\n")
+    # Create a list of the route entries in the "show ip route" output
+    route_output = ip_route_data[ip]
+    route_entries_new = route_output.split("\n")
 
-        # Wait for the command to complete and receive the output
-        output = ""
-        while not channel.recv_ready():
-            pass
-        while channel.recv_ready():
-            output += channel.recv(1024).decode()
+    # Compare the two lists of route entries
+    for index, route_entry in enumerate(route_entries):
+        if route_entry not in route_entries_new:
+            differences[ip] = {
+                "index": index,
+                "old_route": route_entry,
+            }
 
-        # Disconnect from the device
-        channel.close()
-        ssh_client.close()
+# Save the differences to an Excel file
+output_file = "EquinixRoutesAfterChange.xlsx"
+with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
+    for ip, differences in tqdm(differences.items(), desc="Writing to Excel"):
+        df = pd.DataFrame(differences, columns=["Index", "Old Route"])
+        df.to_excel(writer, sheet_name=ip, index=False)
 
-        # Define a regex pattern to match the timestamp format (e.g., 00:00:00 or 12:34:56)
-        pattern = re.compile(r'\d{2}:\d{2}:\d{2}')
-
-        # Remove timestamps from each line
-        ip_route_output = "\n".join([pattern.sub('', line) for line in output.split("\n")])
-
-        return ip_route_output
-    except Exception as e:
-        print(f"Error connecting to {device_ip}: {str(e)}")
-        return ""
-
-# Function to save IP route data to an Excel file
-def save_ip_route_to_excel(data, output_file, sheet_name="{} Route".format(device_ip)):
-    # Create a Pandas DataFrame
-    df = pd.DataFrame({"Route Data": data})
-
-    # Save the DataFrame to the Excel file
-    with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
-        df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-# Retrieve the output of "show ip route" for each device
-for ip in device_ips:
-    route_output = get_ip_route_without_timestamps(ip)
-
-    # Compare the output to the file EquinixRoutesBeforeChange.xlsx
-    with open("EquinixRoutesBeforeChange.xlsx", "r") as f:
-        equinixroutesbeforechange = f.read()
-
-    if route_output != equinixroutesbeforechange:
-        print(f"There are changes to the routes on device {ip}")
-
-    # Save the output to the Excel file
-    with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
-        df = pd.DataFrame({"Route Data": route_output})
-        df.to_excel(writer, sheet_name="{} Route".format(ip), index=False)
-
-print("Done!")
+print(f"Differences in IP routes saved to {output_file}")
