@@ -30,16 +30,15 @@ def get_ip_route_with_ssh(ip, username, password):
 # Load the Excel file with the saved IP route data
 input_file = "EquinixRoutesBeforeChange.xlsx"
 
+# Prompt for the username and password once
+username = input("Enter the username: ")
+password = getpass.getpass(f"Enter the password for {username}: ")
+
 # Define device information
 device_info = [
-    {"ip": "10.111.237.200", "username": None, "password": None},
-    {"ip": "10.111.237.201", "username": None, "password": None},
+    {"ip": "10.111.237.200", "username": username, "password": password},
+    {"ip": "10.111.237.201", "username": username, "password": password},
 ]
-
-# Prompt for the username and password for each device
-for device in device_info:
-    device["username"] = input(f"Enter username for {device['ip']}: ")
-    device["password"] = getpass.getpass(f"Enter password for {device['username']} on {device['ip']}: ")
 
 # Create a Pandas DataFrame for each worksheet in the Excel file
 dfs = []
