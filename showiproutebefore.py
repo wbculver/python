@@ -24,14 +24,11 @@ def get_ip_route_without_timestamps(device_ip):
         "password": password,
         "timeout": 60,  # Increase the timeout if needed
         "session_log": f"session_{device_ip}.log",  # Save session log for debugging
+        "global_delay_factor": 2,  # Add a delay factor to allow more time for the command output
     }
 
     # Connect to the device
     net_connect = ConnectHandler(**device)
-
-    # Modify the SSH channel timeout
-    ssh_conn = net_connect.remote_conn.transport
-    ssh_conn.settimeout(120)  # Set the read timeout to 120 seconds
 
     try:
         # Send the "terminal length 0" command
@@ -65,21 +62,4 @@ output_file = "EquinixRoutesBeforeChange.xlsx"
 # Create a Pandas DataFrame for each device
 dfs = []
 for ip, route_output in ip_route_data.items():
-    # Create a list of route entries with a new line for each entry
-    route_entries = route_output.split("\n")
-    # Create a DataFrame with a single column and the "Routes for Device IP" header
-    df = pd.DataFrame(route_entries, columns=["Route Data"])
-    # Remove invalid characters from sheet name
-    sheet_name = re.sub(r'[\/:*?"<>|]', '_', ip)
-    dfs.append((df, sheet_name))
-
-# Create a Pandas Excel writer
-with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-    for df, sheet_name in tqdm(dfs, desc="Writing to Excel"):
-        # Write each DataFrame to a separate worksheet with the modified sheet name
-        df.to_excel(writer, sheet_name=sheet_name, index=False)
-        worksheet = writer.sheets[sheet_name]
-        # Adjust the column width to fit the content
-        worksheet.set_column('A:A', max(len(line) for line in df["Route Data"]))
-
-print(f"Show IP Route data (without timestamps) saved to {output_file}")
+    # Create a list of route entries with
