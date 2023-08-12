@@ -13,7 +13,7 @@ def get_ip_route_without_timestamps(device_ip, username, password):
             "ip": device_ip,
             "username": username,
             "password": password,
-            "timeout": 60,  # Increase the timeout if needed
+            "timeout": 120,  # Increase the timeout to 120 seconds (or more) if needed
             "global_delay_factor": 2,  # Add a delay factor to allow more time for the command output
         }
 
@@ -21,7 +21,8 @@ def get_ip_route_without_timestamps(device_ip, username, password):
         net_connect = ConnectHandler(**device)
 
         # Send the "show ip route" command
-        output = net_connect.send_command("show ip route")
+        # Explicitly set the expected pattern to wait for
+        output = net_connect.send_command("show ip route", expect_string=r"VA-EQX-HUM-A1-1-R1#")
 
         # Close the SSH connection
         net_connect.disconnect()
