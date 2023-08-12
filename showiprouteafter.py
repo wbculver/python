@@ -22,8 +22,8 @@ def get_ip_route_without_timestamps(device_ip, username, password):
         # Establish SSH connection to the device
         net_connect = ConnectHandler(**device)
 
-        # Send the "show ip route" command and wait for a blank line (console clear)
-        output = net_connect.send_command("show ip route", expect_string="\n")
+        # Send the "show ip route" command
+        output = net_connect.send_command("show ip route", expect_string=r">")
 
         # Close the SSH connection
         net_connect.disconnect()
@@ -39,9 +39,6 @@ def get_ip_route_without_timestamps(device_ip, username, password):
 
 # Load the Excel file with the saved IP route data (before changes)
 input_file_before = "EquinixRoutesBeforeChange.xlsx"
-
-# Load the Excel file with the saved IP route data (after changes)
-input_file_after = "EquinixRoutesAfterChange.xlsx"
 
 # Prompt for the username and password
 username = input("Enter your username: ")
