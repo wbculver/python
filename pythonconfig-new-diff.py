@@ -28,31 +28,29 @@ with ConnectHandler(**{
     running_config = net_connect.send_command("show running-config")
 
     # Normalize and calculate MD5 hash for running configuration
-    running_config_lines = [line.lstrip() for line in running_config.split("\n") if line.strip() and not line.strip().startswith("!")]
+    running_config_lines = [line.strip() for line in running_config.split("\n") if line.strip() and not line.strip().startswith("!")]
     running_config_normalized = "\n".join(running_config_lines)
     running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
 
-    # Loop through each change in config_changes
-    for change in tqdm(config_changes, desc="Applying Configuration Changes", unit="change"):
-        # Normalize and calculate MD5 hash for proposed change
-        change_lines = [line.lstrip() for line in change.split("\n") if line.strip() and not line.strip().startswith("!")]
-        change_normalized = "\n".join(change_lines)
-        change_hash = hashlib.md5(change_normalized.encode()).hexdigest()
+    # Calculate MD5 hash for intended configuration changes
+    intended_config_hash = hashlib.md5("\n".join(config_changes).encode()).hexdigest()
 
-        if change_hash == running_config_hash:
-            print("No configuration changes needed.")
-        else:
-            print("Configuration differs, applying changes...")
+    if intended_config_hash == running_config_hash:
+        print("No configuration changes needed.")
+    else:
+        print("Configuration differs, applying changes...")
 
-            config_commands = [
-                "configure terminal",
-                change,
-                "end"
-            ]
+        config_commands = [
+            "configure terminal"
+        ]
+        
+        config_commands.extend(config_changes)
+        
+        config_commands.append("end")
 
-            output = ""
-            for cmd in config_commands:
-                output += net_connect.send_command_timing(cmd + "\n")
-                print(output)
+        output = ""
+        for cmd in config_commands:
+            output += net_connect.send_command_timing(cmd + "\n")
+            print(output)
 
 print("Configuration update completed.")
