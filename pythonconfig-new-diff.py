@@ -1,7 +1,6 @@
 from netmiko import ConnectHandler
 import yaml
 import hashlib
-import difflib
 from tqdm import tqdm
 
 # Device information
@@ -14,6 +13,9 @@ device_type = "cisco_ios"
 yaml_file = "config.yaml"
 with open(yaml_file) as f:
     config_changes = yaml.safe_load(f)["config_changes"]
+
+# Lines of text to exclude from comparison
+excluded_lines = ["no logging console", "banner motd", "ntp server"]
 
 # Connect to the device
 with ConnectHandler(**{
@@ -30,7 +32,7 @@ with ConnectHandler(**{
 
     # Normalize and calculate MD5 hash for running configuration
     running_config_lines = [line.strip() for line in running_config.split("\n") if line.strip() and not line.strip().startswith("!")]
-    running_config_normalized = "\n".join(running_config_lines)
+    running_config_normalized = "\n".join(line for line in running_config_lines if line not in excluded_lines)
     running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
 
     # Calculate MD5 hash for intended configuration changes
@@ -40,18 +42,7 @@ with ConnectHandler(**{
     if intended_config_hash == running_config_hash:
         print("No configuration changes needed.")
     else:
-        print("Configuration differs, displaying differences...")
-        
-        diff = difflib.unified_diff(
-            running_config_normalized.splitlines(),
-            intended_config.splitlines(),
-            lineterm=""
-        )
-        
-        for line in diff:
-            print(line)
-
-        print("Applying changes...")
+        print("Configuration differs, applying changes...")
 
         config_commands = [
             "configure terminal"
