@@ -11,7 +11,7 @@ device_type = "cisco_ios"
 # Load configuration changes from YAML file
 yaml_file = "config.yaml"
 with open(yaml_file) as f:
-    config_changes = yaml.safe_load(f)
+    config_changes = yaml.safe_load(f)["config_changes"]
 
 # Connect to the device
 with ConnectHandler(**{
@@ -26,21 +26,15 @@ with ConnectHandler(**{
     running_config = net_connect.send_command("show running-config")
 
     # Loop through each change in config_changes
-    for change in tqdm(config_changes, desc="Applying Configuration Changes", unit="interface"):
-        interface = change.get("interface")
-        descriptions = change.get("descriptions", [])
-        
-        config_snippet = f"interface {interface}\n"
-        config_snippet += '\n'.join(f"  description {description}" for description in descriptions)
-
-        if config_snippet.strip() in running_config:
-            print(f"No configuration changes needed for {interface}.")
+    for change in tqdm(config_changes, desc="Applying Configuration Changes", unit="change"):
+        if change.strip() in running_config:
+            print("No configuration changes needed.")
         else:
-            print(f"Configuration differs for {interface}, applying changes...")
+            print("Configuration differs, applying changes...")
             
             config_commands = [
                 "configure terminal",
-                config_snippet,
+                change,
                 "end"
             ]
 
