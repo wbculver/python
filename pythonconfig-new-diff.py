@@ -1,6 +1,7 @@
 from netmiko import ConnectHandler
 import yaml
 import hashlib
+from difflib import unified_diff
 from tqdm import tqdm
 
 # Device information
@@ -42,7 +43,18 @@ with ConnectHandler(**{
     if intended_config_hash == running_config_hash:
         print("No configuration changes needed.")
     else:
-        print("Configuration differs in intended changes, applying changes...")
+        print("Configuration differs in intended changes, displaying differences...")
+
+        diff = unified_diff(
+            running_config_normalized.splitlines(),
+            intended_config.splitlines(),
+            lineterm=""
+        )
+        
+        for line in diff:
+            print(line)
+
+        print("Applying changes...")
 
         config_commands = [
             "configure terminal"
