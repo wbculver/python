@@ -59,6 +59,18 @@ with ConnectHandler(**{
     else:
         print("New configuration changes found, applying changes...")
         
+        # Mark differences with "x"
+        marked_changes = []
+        for line in running_config_after_last_change.splitlines():
+            if line.strip() == new_changes_normalized:
+                marked_changes.append(line)
+            else:
+                marked_changes.append(f"x {line}")
+
+        # Write marked changes to an output file
+        with open("output_changes.txt", "w") as output_file:
+            output_file.write("\n".join(marked_changes))
+
         # Apply the changes
         config_commands = [
             "configure terminal",
