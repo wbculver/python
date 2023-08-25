@@ -44,14 +44,21 @@ with ConnectHandler(**{
     # Download the entire running configuration
     running_config = net_connect.send_command("show running-config")
     
-    # Normalize the running configuration for comparison
-    running_config_normalized = "".join(line.strip() for line in running_config.split("\n"))
+    # Read the content of the last change file
+    with open(last_change_file, "r") as f:
+        last_applied_change_content = f.read()
 
-    # Normalize new intended changes for comparison
-    new_changes_normalized = "".join(line.strip() for line in new_changes_to_apply)
+    # Find the position of the last applied change in the running configuration
+    last_change_position = running_config.find(last_applied_change_content)
+
+    # Extract the portion of the running config after the last applied change
+    running_config_after_last_change = running_config[last_change_position + len(last_applied_change_content):]
+
+    # Normalize the new intended changes for comparison
+    new_changes_normalized = "\n".join(line.strip() for line in new_changes_to_apply)
 
     # Compare new intended changes with the running configuration
-    if new_changes_normalized == running_config_normalized:
+    if new_changes_normalized in running_config_after_last_change:
         print("No new configuration changes needed.")
     else:
         print("New configuration changes found, applying changes...")
