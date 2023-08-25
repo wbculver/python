@@ -53,13 +53,13 @@ with ConnectHandler(**{
     # Normalize the new intended changes for comparison
     new_changes_normalized = "\n".join(line.strip() for line in new_changes_to_apply)
 
-    # Compare new intended changes with the running configuration portion
+    # Mark differences with "x"
     marked_changes = []
-    for line in running_config_after_last_change.splitlines():
-        if line.strip() == new_changes_normalized:
-            marked_changes.append(line)
+    for line1, line2 in zip(running_config_after_last_change.splitlines(), new_changes_normalized.splitlines()):
+        if line1 == line2:
+            marked_changes.append(line1)
         else:
-            marked_changes.append("x " + line)
+            marked_changes.append(f"x {line1}")
 
     # Write marked changes to an output file
     with open("output_changes.txt", "w") as output_file:
