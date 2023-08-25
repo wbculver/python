@@ -1,35 +1,9 @@
 from netmiko import ConnectHandler
 import yaml
 from tqdm import tqdm
+import difflib
 
-# Device information
-device_ip = "10.111.237.162"
-device_username = "admin"
-device_password = "admin"
-device_type = "cisco_ios"
-
-# Load intended configuration changes from YAML file
-yaml_file = "config.yaml"
-with open(yaml_file) as f:
-    config_data = yaml.safe_load(f)
-
-# Extract intended changes from the YAML file
-intended_changes = config_data.get("config_changes", [])
-
-# Read the last applied change from the text file
-last_change_file = "last_change.txt"
-with open(last_change_file, "r") as f:
-    last_applied_change = f.read()
-
-# Find the index of the last applied change in intended_changes
-last_change_index = -1
-for idx, change in enumerate(intended_changes):
-    if change.strip() == last_applied_change.strip():
-        last_change_index = idx
-        break
-
-# Extract new intended changes to compare
-new_changes_to_apply = intended_changes[last_change_index + 1:]
+# ... (rest of the code)
 
 # Connect to the device
 with ConnectHandler(**{
@@ -53,13 +27,16 @@ with ConnectHandler(**{
     # Normalize the new intended changes for comparison
     new_changes_normalized = "\n".join(line.strip() for line in new_changes_to_apply)
 
-    # Mark differences with "x"
+    # Use difflib to compare and highlight differences
+    diff = difflib.unified_diff(running_config_after_last_change.splitlines(), new_changes_normalized.splitlines(), lineterm='')
+
+    # Mark differences with "x" and create a list of marked lines
     marked_changes = []
-    for line1, line2 in zip(running_config_after_last_change.splitlines(), new_changes_normalized.splitlines()):
-        if line1 == line2:
-            marked_changes.append(line1)
+    for line in diff:
+        if line.startswith('+ '):
+            marked_changes.append(f"x {line[2:]}")
         else:
-            marked_changes.append(f"x {line1}")
+            marked_changes.append(line)
 
     # Write marked changes to an output file
     with open("output_changes.txt", "w") as output_file:
