@@ -1,0 +1,9 @@
+config_changes:
+  - |
+    interface GigabitEthernet1
+      description New description for interface 1
+    !
+  - |
+    interface GigabitEthernet2
+      description New description for interface 2
+    !
