@@ -25,7 +25,7 @@ with ConnectHandler(**{
     "global_cmd_verify": False,
 }) as net_connect:
     running_config = net_connect.send_command("show running-config")
-    
+
 last_change_position = running_config.find(last_applied_change)
 
 # Extract the portion of the running config after the last applied change
