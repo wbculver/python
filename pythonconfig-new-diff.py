@@ -26,13 +26,15 @@ with ConnectHandler(**{
 }) as net_connect:
     running_config = net_connect.send_command("show running-config")
 
-    # Calculate MD5 hash of running configuration
-    running_config_hash = hashlib.md5(running_config.encode()).hexdigest()
+    # Normalize running configuration and calculate MD5 hash
+    running_config_normalized = "\n".join(line.strip() for line in running_config.split("\n") if line.strip())
+    running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
 
     # Loop through each change in config_changes
     for change in tqdm(config_changes, desc="Applying Configuration Changes", unit="change"):
-        # Calculate MD5 hash of proposed change
-        change_hash = hashlib.md5(change.encode()).hexdigest()
+        # Normalize proposed change and calculate MD5 hash
+        change_normalized = "\n".join(line.strip() for line in change.split("\n") if line.strip())
+        change_hash = hashlib.md5(change_normalized.encode()).hexdigest()
         
         if change_hash == running_config_hash:
             print("No configuration changes needed.")
