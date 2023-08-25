@@ -19,12 +19,12 @@ intended_changes = config_data.get("config_changes", [])
 # Read the last applied change from the text file
 last_change_file = "last_change.txt"
 with open(last_change_file, "r") as f:
-    last_applied_change = f.read().strip()
+    last_applied_change = f.read()
 
 # Find the index of the last applied change in intended_changes
 last_change_index = -1
 for idx, change in enumerate(intended_changes):
-    if change.strip() == last_applied_change:
+    if change.strip() == last_applied_change.strip():
         last_change_index = idx
         break
 
@@ -45,10 +45,10 @@ with ConnectHandler(**{
     running_config = net_connect.send_command("show running-config")
     
     # Normalize the running configuration for comparison
-    running_config_normalized = "\n".join(line.strip() for line in running_config.split("\n"))
+    running_config_normalized = "".join(line.strip() for line in running_config.split("\n"))
 
     # Normalize new intended changes for comparison
-    new_changes_normalized = "\n".join(line.strip() for line in new_changes_to_apply)
+    new_changes_normalized = "".join(line.strip() for line in new_changes_to_apply)
 
     # Compare new intended changes with the running configuration
     if new_changes_normalized == running_config_normalized:
@@ -59,7 +59,7 @@ with ConnectHandler(**{
         # Apply the changes
         config_commands = [
             "configure terminal",
-            new_changes_normalized,
+            "\n".join(new_changes_to_apply),
             "end"
         ]
 
