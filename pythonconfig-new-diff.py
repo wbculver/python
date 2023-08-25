@@ -36,9 +36,9 @@ with ConnectHandler(**{
     running_config_normalized = "\n".join(running_config_lines)
     running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
 
-    # Calculate MD5 hash for intended configuration changes
-    intended_config = "\n".join(intended_changes)
-    intended_config_hash = hashlib.md5(intended_config.encode()).hexdigest()
+    # Normalize intended configuration changes and calculate MD5 hash
+    intended_config_normalized = "\n".join(line.strip() for line in intended_changes if line.strip())
+    intended_config_hash = hashlib.md5(intended_config_normalized.encode()).hexdigest()
 
     if intended_config_hash == running_config_hash:
         print("No configuration changes needed.")
@@ -47,7 +47,7 @@ with ConnectHandler(**{
 
         diff = unified_diff(
             running_config_normalized.splitlines(),
-            intended_config.splitlines(),
+            intended_config_normalized.splitlines(),
             lineterm=""
         )
         
