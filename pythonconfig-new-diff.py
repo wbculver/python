@@ -1,17 +1,17 @@
 from netmiko import ConnectHandler
 from tqdm import tqdm  # Import tqdm for the progress bar
 
+# Define the common credentials
+device_username = input("Enter the common username: ")
+device_password = input("Enter the common password: ")
+device_type = "cisco_ios"
+
 # Read the list of device IPs from the host file
 host_file_path = "hostfile.txt"
 with open(host_file_path, "r") as host_file:
     device_ips = host_file.read().splitlines()
 
 for device_ip in device_ips:
-    # Prompt user for device credentials
-    device_username = input(f"Enter the username for {device_ip}: ")
-    device_password = input(f"Enter the password for {device_ip}: ")
-    device_type = "cisco_ios"
-
     # Read the changes for this device from its respective change file
     change_file_path = f"change_{device_ip}.txt"
     with open(change_file_path, "r") as change_file:
