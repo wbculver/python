@@ -8,16 +8,15 @@ device_username = "admin"
 device_password = "admin"
 device_type = "cisco_ios"
 
-# Read the full running configuration from a text file
-with open("full_running_config.txt", "r") as f:
-    full_running_config = f.read()
-
 # Read the last applied change from the text file
 last_change_file = "last_change.txt"
 with open(last_change_file, "r") as f:
     last_applied_change = f.read()
 
 # Find the position of the last applied change in the full running configuration
+with open("full_running_config.txt", "r") as f:
+    full_running_config = f.read()
+
 last_change_position = full_running_config.find(last_applied_change)
 
 # Extract the portion of the full running config after the last applied change
@@ -26,12 +25,6 @@ running_config_after_last_change = full_running_config[last_change_position + le
 # Read the new changes to apply from a separate text file
 with open("new_changes.txt", "r") as f:
     new_changes_to_apply = f.read()
-
-# Debugging print statements
-print("Content of new_changes_to_apply:")
-print(new_changes_to_apply)
-print("Running config portion after last change:")
-print(running_config_after_last_change)
 
 # Normalize the content for comparison
 new_changes_normalized = new_changes_to_apply.strip()
