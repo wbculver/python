@@ -1,54 +1,59 @@
 from netmiko import ConnectHandler
 from tqdm import tqdm  # Import tqdm for the progress bar
 
-# Prompt user for device credentials
-device_ip = input("Enter the device IP: ")
-device_username = input("Enter the device username: ")
-device_password = input("Enter the device password: ")
-device_type = "cisco_ios"
+# Read the list of device IPs from the host file
+host_file_path = "hostfile.txt"
+with open(host_file_path, "r") as host_file:
+    device_ips = host_file.read().splitlines()
 
-# Read the new changes from the text file
-new_changes_file_path = "new_changes.txt"
-with open(new_changes_file_path, "r") as f:
-    new_changes_to_apply = f.read()
+for device_ip in device_ips:
+    # Prompt user for device credentials
+    device_username = input(f"Enter the username for {device_ip}: ")
+    device_password = input(f"Enter the password for {device_ip}: ")
+    device_type = "cisco_ios"
 
-# Connect to the device
-with ConnectHandler(**{
-    "ip": device_ip,
-    "username": device_username,
-    "password": device_password,
-    "device_type": device_type,
-    "global_delay_factor": 3,
-    "timeout": 300,
-    "global_cmd_verify": False,
-}) as net_connect:
-    print("Downloading the latest running configuration...")
+    # Read the changes for this device from its respective change file
+    change_file_path = f"change_{device_ip}.txt"
+    with open(change_file_path, "r") as change_file:
+        new_changes_to_apply = change_file.read()
 
-    # Download the running configuration
-    running_config = net_connect.send_command("show running-config")
+    # Connect to the device
+    with ConnectHandler(**{
+        "ip": device_ip,
+        "username": device_username,
+        "password": device_password,
+        "device_type": device_type,
+        "global_delay_factor": 3,
+        "timeout": 300,
+        "global_cmd_verify": False,
+    }) as net_connect:
+        print(f"Downloading the latest running configuration from {device_ip}...")
 
-    # Save the running configuration to a file
-    running_config_file_path = "running_config.txt"
-    with open(running_config_file_path, "w") as f:
-        f.write(running_config)
+        # Download the running configuration
+        running_config = net_connect.send_command("show running-config")
 
-    print("Running configuration saved to:", running_config_file_path)
+        # Save the running configuration to a file
+        running_config_file_path = f"running_config_{device_ip}.txt"
+        with open(running_config_file_path, "w") as f:
+            f.write(running_config)
 
-    print("Applying configuration changes...")
+        print(f"Running configuration from {device_ip} saved to:", running_config_file_path)
 
-    # Apply the changes from the new_changes.txt file
-    config_commands = [
-        "configure terminal",
-        new_changes_to_apply,
-        "end"
-    ]
+        print(f"Applying configuration changes to {device_ip}...")
 
-    output = ""
-    with tqdm(total=len(config_commands), desc="Progress", unit="step") as pbar:
-        for cmd in config_commands:
-            output += net_connect.send_command_timing(cmd + "\n")
-            pbar.update(1)  # Update the progress bar
+        # Apply the changes from the respective change file
+        config_commands = [
+            "configure terminal",
+            new_changes_to_apply,
+            "end"
+        ]
 
-    print(output)  # Print the captured output after all commands are executed
+        output = ""
+        with tqdm(total=len(config_commands), desc=f"Progress for {device_ip}", unit="step") as pbar:
+            for cmd in config_commands:
+                output += net_connect.send_command_timing(cmd + "\n")
+                pbar.update(1)  # Update the progress bar
 
-print("Configuration update completed.")
+        print(output)  # Print the captured output after all commands are executed
+
+    print(f"Configuration update for {device_ip} completed.")
