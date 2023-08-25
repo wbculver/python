@@ -19,7 +19,7 @@ intended_changes = config_data.get("config_changes", [])
 # Read the last applied change from the text file
 last_change_file = "last_change.txt"
 with open(last_change_file, "r") as f:
-    last_applied_change = f.read()
+    last_applied_change = f.read().strip()
 
 # Connect to the device
 with ConnectHandler(**{
@@ -37,14 +37,15 @@ with ConnectHandler(**{
     # Normalize the running configuration for comparison
     running_config_normalized = "\n".join(line.strip() for line in running_config.split("\n"))
 
+    # Find index of last applied change in the intended changes
+    last_change_index = -1
+    for idx, change in enumerate(intended_changes):
+        if change.strip() == last_applied_change:
+            last_change_index = idx
+            break
+
     # Apply intended changes only for changes after the last applied change
-    changes_to_apply = []
-    apply_changes = False
-    for change in intended_changes:
-        if apply_changes:
-            changes_to_apply.append(change.strip())
-        if change.strip() == last_applied_change.strip():
-            apply_changes = True
+    changes_to_apply = intended_changes[last_change_index + 1:]
 
     # Compare the intended configuration changes with the running configuration
     if "\n".join(changes_to_apply) == running_config_normalized:
