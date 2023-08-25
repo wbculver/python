@@ -24,8 +24,9 @@ with ConnectHandler(**{
     "timeout": 300,
     "global_cmd_verify": False,
 }) as net_connect:
+    # Download the entire running configuration
     running_config = net_connect.send_command("show running-config")
-
+    
     # Normalize running configuration and calculate MD5 hash
     running_config_normalized = "\n".join(line.strip() for line in running_config.split("\n") if line.strip())
     running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
