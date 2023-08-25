@@ -31,12 +31,18 @@ with ConnectHandler(**{
     running_config_normalized = "\n".join(line.strip() for line in running_config.split("\n") if line.strip())
     running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
 
+    print("Running Configuration:")
+    print(running_config_normalized)  # Print normalized running config
+
     # Loop through each change in config_changes
     for change in tqdm(config_changes, desc="Applying Configuration Changes", unit="change"):
         # Normalize proposed change and calculate MD5 hash
         change_normalized = "\n".join(line.strip() for line in change.split("\n") if line.strip())
         change_hash = hashlib.md5(change_normalized.encode()).hexdigest()
-        
+
+        print("Proposed Change:")
+        print(change_normalized)  # Print normalized change
+
         if change_hash == running_config_hash:
             print("No configuration changes needed.")
         else:
