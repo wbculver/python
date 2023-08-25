@@ -1,9 +1,10 @@
 from netmiko import ConnectHandler
+from tqdm import tqdm  # Import tqdm for the progress bar
 
-# Device information
-device_ip = "10.111.237.162"
-device_username = "admin"
-device_password = "admin"
+# Prompt user for device credentials
+device_ip = input("Enter the device IP: ")
+device_username = input("Enter the device username: ")
+device_password = input("Enter the device password: ")
 device_type = "cisco_ios"
 
 # Read the new changes from the text file
@@ -21,6 +22,18 @@ with ConnectHandler(**{
     "timeout": 300,
     "global_cmd_verify": False,
 }) as net_connect:
+    print("Downloading the latest running configuration...")
+
+    # Download the running configuration
+    running_config = net_connect.send_command("show running-config")
+
+    # Save the running configuration to a file
+    running_config_file_path = "running_config.txt"
+    with open(running_config_file_path, "w") as f:
+        f.write(running_config)
+
+    print("Running configuration saved to:", running_config_file_path)
+
     print("Applying configuration changes...")
 
     # Apply the changes from the new_changes.txt file
@@ -31,8 +44,11 @@ with ConnectHandler(**{
     ]
 
     output = ""
-    for cmd in config_commands:
-        output += net_connect.send_command_timing(cmd + "\n")
-        print(output)
+    with tqdm(total=len(config_commands), desc="Progress", unit="step") as pbar:
+        for cmd in config_commands:
+            output += net_connect.send_command_timing(cmd + "\n")
+            pbar.update(1)  # Update the progress bar
+
+    print(output)  # Print the captured output after all commands are executed
 
 print("Configuration update completed.")
