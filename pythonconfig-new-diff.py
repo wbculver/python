@@ -99,8 +99,9 @@ with ConnectHandler(**{
                 f.write(new_changes_normalized)
             
             # Save the updated running configuration to a file
+            updated_running_config = net_connect.send_command("show running-config")
             with open("updated_running_config.txt", "w") as f:
-                f.write(running_config)
+                f.write(updated_running_config)
         else:
             print("No new configuration changes needed.")
     else:
