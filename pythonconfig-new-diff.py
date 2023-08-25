@@ -57,32 +57,41 @@ with ConnectHandler(**{
     # Use difflib to compare and highlight differences
     diff = difflib.unified_diff(running_config_after_last_change.splitlines(), new_changes_normalized.splitlines(), lineterm='')
 
-    # Mark differences with "x" and create a list of marked lines
-    marked_changes = []
-    for line in diff:
-        if line.startswith('+ '):
-            marked_changes.append(f"x {line[2:]}")
-        else:
-            marked_changes.append(line)
+    # Check if there are any differences
+    differences_exist = any(line.startswith('+ ') for line in diff)
 
-    # Write marked changes to an output file
-    with open("output_changes.txt", "w") as output_file:
-        output_file.write("\n".join(marked_changes))
+    # If there are differences, apply the changes
+    if differences_exist:
+        print("New configuration changes found, applying changes...")
 
-    # Apply the changes
-    config_commands = [
-        "configure terminal",
-        "\n".join(new_changes_to_apply),
-        "end"
-    ]
+        # Mark differences with "x" and create a list of marked lines
+        marked_changes = []
+        for line in diff:
+            if line.startswith('+ '):
+                marked_changes.append(f"x {line[2:]}")
+            else:
+                marked_changes.append(line)
 
-    output = ""
-    for cmd in config_commands:
-        output += net_connect.send_command_timing(cmd + "\n")
-        print(output)
+        # Write marked changes to an output file
+        with open("output_changes.txt", "w") as output_file:
+            output_file.write("\n".join(marked_changes))
 
-    # Update the last applied change in the text file
-    with open(last_change_file, "w") as f:
-        f.write("\n".join(new_changes_to_apply))
+        # Apply the changes
+        config_commands = [
+            "configure terminal",
+            "\n".join(new_changes_to_apply),
+            "end"
+        ]
+
+        output = ""
+        for cmd in config_commands:
+            output += net_connect.send_command_timing(cmd + "\n")
+            print(output)
+
+        # Update the last applied change in the text file
+        with open(last_change_file, "w") as f:
+            f.write("\n".join(new_changes_to_apply))
+    else:
+        print("No new configuration changes needed.")
 
 print("Configuration update completed.")
