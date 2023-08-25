@@ -26,28 +26,24 @@ with ConnectHandler(**{
 }) as net_connect:
     # Download the entire running configuration
     running_config = net_connect.send_command("show running-config")
-    
-    # Normalize running configuration and calculate MD5 hash
-    running_config_normalized = "\n".join(line.strip() for line in running_config.split("\n") if line.strip())
-    running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
 
-    print("Running Configuration:")
-    print(running_config_normalized)  # Print normalized running config
+    # Normalize and calculate MD5 hash for running configuration
+    running_config_lines = [line.strip() for line in running_config.split("\n") if line.strip() and not line.strip().startswith("!")]
+    running_config_normalized = "\n".join(running_config_lines)
+    running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
 
     # Loop through each change in config_changes
     for change in tqdm(config_changes, desc="Applying Configuration Changes", unit="change"):
-        # Normalize proposed change and calculate MD5 hash
-        change_normalized = "\n".join(line.strip() for line in change.split("\n") if line.strip())
+        # Normalize and calculate MD5 hash for proposed change
+        change_lines = [line.strip() for line in change.split("\n") if line.strip() and not line.strip().startswith("!")]
+        change_normalized = "\n".join(change_lines)
         change_hash = hashlib.md5(change_normalized.encode()).hexdigest()
-
-        print("Proposed Change:")
-        print(change_normalized)  # Print normalized change
 
         if change_hash == running_config_hash:
             print("No configuration changes needed.")
         else:
             print("Configuration differs, applying changes...")
-            
+
             config_commands = [
                 "configure terminal",
                 change,
