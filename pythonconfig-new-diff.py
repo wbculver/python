@@ -27,8 +27,18 @@ running_config_after_last_change = full_running_config[last_change_position + le
 with open("new_changes.txt", "r") as f:
     new_changes_to_apply = f.read()
 
+# Debugging print statements
+print("Content of new_changes_to_apply:")
+print(new_changes_to_apply)
+print("Running config portion after last change:")
+print(running_config_after_last_change)
+
+# Normalize the content for comparison
+new_changes_normalized = new_changes_to_apply.strip()
+running_config_normalized = running_config_after_last_change.strip()
+
 # Use difflib to compare and highlight differences
-diff = difflib.unified_diff(running_config_after_last_change.splitlines(), new_changes_to_apply.splitlines(), lineterm='')
+diff = difflib.unified_diff(running_config_normalized.splitlines(), new_changes_normalized.splitlines(), lineterm='')
 
 # Check if there are any differences
 differences_exist = any(line.startswith('+ ') for line in diff)
@@ -62,7 +72,7 @@ with ConnectHandler(**{
         # Apply the changes
         config_commands = [
             "configure terminal",
-            "\n".join(new_changes_to_apply.splitlines()),
+            "\n".join(new_changes_normalized.splitlines()),
             "end"
         ]
 
@@ -73,7 +83,7 @@ with ConnectHandler(**{
 
         # Update the last applied change in the text file
         with open(last_change_file, "w") as f:
-            f.write(new_changes_to_apply)
+            f.write(new_changes_normalized)
     else:
         print("No new configuration changes needed.")
 
