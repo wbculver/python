@@ -12,11 +12,7 @@ device_type = "cisco_ios"
 # Load configuration changes from YAML file
 yaml_file = "config.yaml"
 with open(yaml_file) as f:
-    config_data = yaml.safe_load(f)
-
-print("Loaded YAML Data:")
-print(config_data)  # Print the loaded YAML data for debugging
-config_changes = config_data["config_changes"]
+    config_changes = yaml.safe_load(f)["config_changes"]
 
 # Connect to the device
 with ConnectHandler(**{
@@ -30,16 +26,16 @@ with ConnectHandler(**{
 }) as net_connect:
     # Download the entire running configuration
     running_config = net_connect.send_command("show running-config")
-    
+
     # Normalize and calculate MD5 hash for running configuration
-    running_config_lines = [line.strip() for line in running_config.split("\n") if line.strip() and not line.strip().startswith("!")]
+    running_config_lines = [line.lstrip() for line in running_config.split("\n") if line.strip() and not line.strip().startswith("!")]
     running_config_normalized = "\n".join(running_config_lines)
     running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
 
     # Loop through each change in config_changes
     for change in tqdm(config_changes, desc="Applying Configuration Changes", unit="change"):
         # Normalize and calculate MD5 hash for proposed change
-        change_lines = [line.strip() for line in change.split("\n") if line.strip() and not line.strip().startswith("!")]
+        change_lines = [line.lstrip() for line in change.split("\n") if line.strip() and not line.strip().startswith("!")]
         change_normalized = "\n".join(change_lines)
         change_hash = hashlib.md5(change_normalized.encode()).hexdigest()
 
