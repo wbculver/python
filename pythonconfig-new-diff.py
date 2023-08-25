@@ -16,6 +16,11 @@ with open(yaml_file) as f:
 # Extract intended changes from the YAML file
 intended_changes = config_data.get("config_changes", [])
 
+# Read the last applied change from the text file
+last_change_file = "last_change.txt"
+with open(last_change_file, "r") as f:
+    last_applied_change = f.read()
+
 # Connect to the device
 with ConnectHandler(**{
     "ip": device_ip,
@@ -32,20 +37,25 @@ with ConnectHandler(**{
     # Normalize the running configuration for comparison
     running_config_normalized = "\n".join(line.strip() for line in running_config.split("\n"))
 
-    # Apply intended changes to the running config lines
-    for idx, change in enumerate(intended_changes):
-        intended_changes[idx] = change.strip()
+    # Apply intended changes only for changes after the last applied change
+    changes_to_apply = []
+    apply_changes = False
+    for change in intended_changes:
+        if apply_changes:
+            changes_to_apply.append(change.strip())
+        if change.strip() == last_applied_change.strip():
+            apply_changes = True
 
-    # Compare the intended configuration with the normalized running configuration
-    if "\n".join(intended_changes) == running_config_normalized:
-        print("No configuration changes needed.")
+    # Compare the intended configuration changes with the running configuration
+    if "\n".join(changes_to_apply) == running_config_normalized:
+        print("No new configuration changes needed.")
     else:
-        print("Configuration differs in intended changes, applying changes...")
+        print("New configuration changes found, applying changes...")
         
         # Apply the changes
         config_commands = [
             "configure terminal",
-            "\n".join(intended_changes),
+            "\n".join(changes_to_apply),
             "end"
         ]
 
@@ -53,5 +63,9 @@ with ConnectHandler(**{
         for cmd in config_commands:
             output += net_connect.send_command_timing(cmd + "\n")
             print(output)
+
+        # Update the last applied change in the text file
+        with open(last_change_file, "w") as f:
+            f.write("\n".join(changes_to_apply))
 
 print("Configuration update completed.")
