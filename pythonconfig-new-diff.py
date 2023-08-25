@@ -1,5 +1,6 @@
 from netmiko import ConnectHandler
 import yaml
+import hashlib
 from tqdm import tqdm
 
 # Device information
@@ -25,9 +26,15 @@ with ConnectHandler(**{
 }) as net_connect:
     running_config = net_connect.send_command("show running-config")
 
+    # Calculate MD5 hash of running configuration
+    running_config_hash = hashlib.md5(running_config.encode()).hexdigest()
+
     # Loop through each change in config_changes
     for change in tqdm(config_changes, desc="Applying Configuration Changes", unit="change"):
-        if change.strip() in running_config:
+        # Calculate MD5 hash of proposed change
+        change_hash = hashlib.md5(change.encode()).hexdigest()
+        
+        if change_hash == running_config_hash:
             print("No configuration changes needed.")
         else:
             print("Configuration differs, applying changes...")
