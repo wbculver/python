@@ -3,7 +3,34 @@ import yaml
 from tqdm import tqdm
 import difflib
 
-# ... (rest of the code)
+# Device information
+device_ip = "10.111.237.162"
+device_username = "admin"
+device_password = "admin"
+device_type = "cisco_ios"
+
+# Load intended configuration changes from YAML file
+yaml_file = "config.yaml"
+with open(yaml_file) as f:
+    config_data = yaml.safe_load(f)
+
+# Extract intended changes from the YAML file
+intended_changes = config_data.get("config_changes", [])
+
+# Read the last applied change from the text file
+last_change_file = "last_change.txt"
+with open(last_change_file, "r") as f:
+    last_applied_change = f.read()
+
+# Find the index of the last applied change in intended_changes
+last_change_index = -1
+for idx, change in enumerate(intended_changes):
+    if change.strip() == last_applied_change.strip():
+        last_change_index = idx
+        break
+
+# Extract new intended changes to compare
+new_changes_to_apply = intended_changes[last_change_index + 1:]
 
 # Connect to the device
 with ConnectHandler(**{
