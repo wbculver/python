@@ -1,7 +1,5 @@
 from netmiko import ConnectHandler
 import yaml
-import hashlib
-from difflib import unified_diff
 from tqdm import tqdm
 
 # Device information
@@ -30,39 +28,26 @@ with ConnectHandler(**{
 }) as net_connect:
     # Download the entire running configuration
     running_config = net_connect.send_command("show running-config")
+    
+    # Remove all whitespace characters from running configuration
+    running_config = "".join(running_config.split())
 
-    # Normalize and calculate MD5 hash for running configuration
-    running_config_lines = [line.strip() for line in running_config.split("\n") if line.strip() and not line.strip().startswith("!")]
-    running_config_normalized = "\n".join(running_config_lines)
-    running_config_hash = hashlib.md5(running_config_normalized.encode()).hexdigest()
+    # Apply intended changes to the running config lines
+    for idx, change in enumerate(intended_changes):
+        intended_changes[idx] = "".join(change.split())
 
-    # Normalize intended configuration changes and calculate MD5 hash
-    intended_config_normalized = "\n".join(line.strip() for line in intended_changes if line.strip())
-    intended_config_hash = hashlib.md5(intended_config_normalized.encode()).hexdigest()
-
-    if intended_config_hash == running_config_hash:
+    # Compare the intended configuration with the running configuration
+    if "".join(intended_changes) == running_config:
         print("No configuration changes needed.")
     else:
-        print("Configuration differs in intended changes, displaying differences...")
-
-        diff = unified_diff(
-            running_config_normalized.splitlines(),
-            intended_config_normalized.splitlines(),
-            lineterm=""
-        )
+        print("Configuration differs in intended changes, applying changes...")
         
-        for line in diff:
-            print(line)
-
-        print("Applying changes...")
-
+        # Apply the changes
         config_commands = [
-            "configure terminal"
+            "configure terminal",
+            "\n".join(intended_changes),
+            "end"
         ]
-        
-        config_commands.extend(intended_changes)
-        
-        config_commands.append("end")
 
         output = ""
         for cmd in config_commands:
