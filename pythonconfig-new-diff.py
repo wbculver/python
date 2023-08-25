@@ -29,15 +29,15 @@ with ConnectHandler(**{
     # Download the entire running configuration
     running_config = net_connect.send_command("show running-config")
     
-    # Remove all whitespace characters from running configuration
-    running_config = "".join(running_config.split())
+    # Normalize the running configuration for comparison
+    running_config_normalized = "\n".join(line.strip() for line in running_config.split("\n"))
 
     # Apply intended changes to the running config lines
     for idx, change in enumerate(intended_changes):
-        intended_changes[idx] = "".join(change.split())
+        intended_changes[idx] = change.strip()
 
-    # Compare the intended configuration with the running configuration
-    if "".join(intended_changes) == running_config:
+    # Compare the intended configuration with the normalized running configuration
+    if "\n".join(intended_changes) == running_config_normalized:
         print("No configuration changes needed.")
     else:
         print("Configuration differs in intended changes, applying changes...")
