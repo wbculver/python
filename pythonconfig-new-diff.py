@@ -1,21 +1,24 @@
 from netmiko import ConnectHandler
 from tqdm import tqdm  # Import tqdm for the progress bar
 
-# Define the common credentials
-device_username = input("Enter the common username: ")
-device_password = input("Enter the common password: ")
-device_type = "cisco_ios"
-
 # Read the list of device IPs from the host file
 host_file_path = "hostfile.txt"
 with open(host_file_path, "r") as host_file:
     device_ips = host_file.read().splitlines()
 
 for device_ip in device_ips:
+    # Prompt user for device credentials
+    device_username = input(f"Enter the username for {device_ip}: ")
+    device_password = input(f"Enter the password for {device_ip}: ")
+    device_type = "cisco_ios"
+
     # Read the changes for this device from its respective change file
     change_file_path = f"change_{device_ip}.txt"
     with open(change_file_path, "r") as change_file:
-        new_changes_to_apply = change_file.read()
+        new_changes_to_apply = change_file.readlines()
+
+    # Filter out lines starting with "#" and strip whitespace
+    new_changes_to_apply = [line.strip() for line in new_changes_to_apply if not line.startswith("#")]
 
     # Connect to the device
     with ConnectHandler(**{
@@ -41,10 +44,10 @@ for device_ip in device_ips:
 
         print(f"Applying configuration changes to {device_ip}...")
 
-        # Apply the changes from the respective change file
+        # Apply the changes from the filtered change list
         config_commands = [
             "configure terminal",
-            new_changes_to_apply,
+            *new_changes_to_apply,  # Spread the filtered changes into the list
             "end"
         ]
 
