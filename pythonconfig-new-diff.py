@@ -54,6 +54,7 @@ for device_ip in device_ips:
         output = ""
         with tqdm(total=len(config_commands), desc=f"Progress for {device_ip}", unit="step") as pbar:
             for cmd in config_commands:
+                print(f"Sending command: {cmd}")  # Print the command being sent
                 output += net_connect.send_command_timing(cmd + "\n")
                 pbar.update(1)  # Update the progress bar
 
